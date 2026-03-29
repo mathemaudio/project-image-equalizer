@@ -1,0 +1,29 @@
+{
+  "name": "lll-server",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit --watch",
+    "lll-check": "pnpm exec lllts --project tsconfig.json --entry src/Main.lll.ts --noTests",
+    "dev": "npm run stop ; PM2_HOME=.pm2 pm2 delete ecosystem.config.cjs || true ; PM2_HOME=.pm2 pm2 flush ; PM2_HOME=.pm2 pm2 start ecosystem.config.cjs ; PM2_HOME=.pm2 pm2 logs",
+    "stop": "PM2_HOME=.pm2 pm2 stop ecosystem.config.cjs || true",
+    "restart": "PM2_HOME=.pm2 pm2 restart ecosystem.config.cjs",
+    "logs": "PM2_HOME=.pm2 pm2 logs",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/Main.lll.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.10.0",
+    "express": "^4.21.1",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.1",
+    "pm2": "^6.0.13",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "lllts": "file:../.lll/vendor/lllts"
+  }
+}
