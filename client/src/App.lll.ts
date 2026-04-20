@@ -1,91 +1,80 @@
 import { LitElement, css, html, type TemplateResult } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
+import { customElement } from 'lit/decorators.js'
 import { Spec } from '@shared/lll.lll'
-import './Calculator.lll'
+import './ImageEqualizer.lll'
 
-@Spec('Composes the application root layout with background and content.')
+@Spec('Composes the application shell for the browser-only interactive frequency-domain image equalizer.')
 @customElement('app-root')
 export class App extends LitElement {
 	static styles = css`
 		:host {
-			display: grid;
-			height: 100vh;
-			place-items: center;
-			margin: 0;
-			padding: 0;
-			color: rgb(210, 210, 210);
-			background-image:
-				linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)),
-				url('/images/bg70s/2.webp');
-			background-size: cover;
-			background-position: center;
-			background-repeat: no-repeat;
+			display: block;
+			min-height: 100vh;
+			padding: 28px;
+			color: #eef4ff;
+			background:
+				radial-gradient(circle at top, rgba(93, 118, 255, 0.22), transparent 42%),
+				linear-gradient(180deg, #090d17 0%, #0d1221 55%, #090d17 100%);
 			font-family: 'Manrope', 'Segoe UI', system-ui, -apple-system, sans-serif;
-			box-sizing: border-box;
 		}
 
 		main {
+			max-width: 1380px;
+			margin: 0 auto;
+			display: grid;
+			gap: 20px;
 		}
 
-		span[id='example-content'] {
-			max-width: 760px;
-			padding: 28px;
-			border-radius: 16px;
-			margin: 8px;
+		header {
 			display: grid;
-			gap: 16px;
+			gap: 10px;
+		}
+
+		h1 {
 			margin: 0;
-			font-size: clamp(1.4rem, 2.2vw, 2rem);
-			line-height: 1.3;
-			letter-spacing: -0.01em;
+			font-size: clamp(2rem, 4vw, 3.5rem);
+			letter-spacing: -0.04em;
 		}
 
-		.controls {
+		.lead {
+			max-width: 820px;
+			font-size: 1.05rem;
+			line-height: 1.6;
+			color: rgba(233, 239, 255, 0.82);
+		}
+
+		.badges {
 			display: flex;
-			justify-content: flex-start;
+			flex-wrap: wrap;
+			gap: 10px;
 		}
 
-		button {
-			padding: 10px 14px;
-			border-radius: 10px;
-			border: 1px solid rgb(73 52 22);
-			background: linear-gradient(135deg, #4a3e2c, #302213);
-			color: white;
-			font-weight: 700;
-			cursor: pointer;
-		}
-
-		.calculator-area {
-			display: grid;
-			justify-content: center;
+		.badge {
+			padding: 8px 12px;
+			border-radius: 999px;
+			background: rgba(255, 255, 255, 0.06);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			font-size: 0.84rem;
+			color: rgba(233, 239, 255, 0.76);
 		}
 	`
 
-	@state()
-	private isCalculatorVisible: boolean = false
-
-	@Spec('Toggles calculator panel visibility in the app UI.')
-	private toggleCalculator() {
-		this.isCalculatorVisible = !this.isCalculatorVisible
-	}
-
-	@Spec('Renders the root application composition.')
+	@Spec('Renders the app shell and the interactive image equalizer experience.')
 	render(): TemplateResult {
 		return html`
-			<main>			
-				<span id="example-content">
-					<p>
-						This is a template for a client-server app with Zod and shared types between client and server, written in LLLTS. Please delete this block and build anything you like instead.
-					</p>
-					<div class="controls">
-						<button @click=${this.toggleCalculator}>
-							${this.isCalculatorVisible ? 'Close calculator' : 'Open calculator'}
-						</button>
+			<main>
+				<header>
+					<div class="badges">
+						<span class="badge">Client-side only</span>
+						<span class="badge">FFT-domain magnitude shaping</span>
+						<span class="badge">5 draggable bands by default</span>
 					</div>
-					${this.isCalculatorVisible
-				? html`<section class="calculator-area"><calculator-panel></calculator-panel></section>`
-				: null}
-				</span>
+					<h1>Interactive Frequency-Domain Image Equalizer</h1>
+					<p class="lead">
+						Upload any image, sculpt overlapping frequency bands like a parametric EQ, and watch the processed version respond live below the original.
+					</p>
+				</header>
+				<image-equalizer></image-equalizer>
 			</main>
 		`
 	}

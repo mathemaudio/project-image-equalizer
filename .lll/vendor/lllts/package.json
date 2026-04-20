@@ -1,6 +1,6 @@
 {
   "name": "lllts",
-  "version": "0.1.0",
+  "version": "0.1.35",
   "description": "LLLTS: A self-testing, LLM-friendly language built on TypeScript",
   "main": "dist/LLLTS.lll.js",
   "bin": {
@@ -14,7 +14,7 @@
     "llm"
   ],
   "author": "",
-  "license": "MIT",
+  "license": "LLL LICENSE",
   "dependencies": {
     "express": "^4.22.1",
     "playwright": "^1.52.0",
@@ -23,9 +23,11 @@
   "devDependencies": {
     "@types/express": "^4.17.25",
     "@types/node": "^20.10.6",
+    "esbuild": "^0.25.12",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "lllts": "file:.lll/vendor/lllts"
   },
   "engines": {
     "node": ">=18.0.0"
