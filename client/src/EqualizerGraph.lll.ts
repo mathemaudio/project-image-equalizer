@@ -160,43 +160,51 @@ export class EqualizerGraph extends LitElement {
 		const centerX = this.frequencyToX(band.center)
 		const y = this.gainToY(band.gain)
 		const spread = this.bandQToSpread(band.q)
-		const leftX = this.frequencyToX(this.clamp(band.center / Math.pow(2, spread), 0.01, 1))
-		const rightX = this.frequencyToX(this.clamp(band.center * Math.pow(2, spread), 0.01, 1))
+		const leftFrequency = band.center / Math.pow(2, spread)
+		const rightFrequency = band.center * Math.pow(2, spread)
+		const leftX = this.frequencyToX(this.clamp(leftFrequency, 0.01, 1))
+		const rightX = this.frequencyToX(this.clamp(rightFrequency, 0.01, 1))
+		const showLeftHandle = leftFrequency >= 0.01
+		const showRightHandle = rightFrequency <= 1
 		const top = y - 18
 		const bottom = y + 10
 		const cap = 9
 		return svg`
 			<g aria-label="${band.label} width handles">
-				<line
-					x1="${leftX}"
-					y1="${top}"
-					x2="${leftX}"
-					y2="${bottom}"
-					stroke="${band.color}"
-					stroke-width="4"
-					stroke-linecap="round"
-					style="cursor: ew-resize;"
-					data-width-handle="left"
-					@pointerdown=${(event: PointerEvent) => this.onWidthHandlePointerDown(event, band.id)}
-				></line>
-				<line x1="${leftX}" y1="${top}" x2="${leftX + cap}" y2="${top}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
-				<line x1="${leftX}" y1="${bottom}" x2="${leftX + cap}" y2="${bottom}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
-				<line
-					x1="${rightX}"
-					y1="${top}"
-					x2="${rightX}"
-					y2="${bottom}"
-					stroke="${band.color}"
-					stroke-width="4"
-					stroke-linecap="round"
-					style="cursor: ew-resize;"
-					data-width-handle="right"
-					@pointerdown=${(event: PointerEvent) => this.onWidthHandlePointerDown(event, band.id)}
-				></line>
-				<line x1="${rightX}" y1="${top}" x2="${rightX - cap}" y2="${top}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
-				<line x1="${rightX}" y1="${bottom}" x2="${rightX - cap}" y2="${bottom}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
-				<line x1="${centerX}" y1="${y}" x2="${leftX}" y2="${y}" stroke="${band.color}" stroke-width="2" opacity="0.45" stroke-dasharray="4 4" style="pointer-events: none;"></line>
-				<line x1="${centerX}" y1="${y}" x2="${rightX}" y2="${y}" stroke="${band.color}" stroke-width="2" opacity="0.45" stroke-dasharray="4 4" style="pointer-events: none;"></line>
+				${showLeftHandle ? svg`
+					<line
+						x1="${leftX}"
+						y1="${top}"
+						x2="${leftX}"
+						y2="${bottom}"
+						stroke="${band.color}"
+						stroke-width="4"
+						stroke-linecap="round"
+						style="cursor: ew-resize;"
+						data-width-handle="left"
+						@pointerdown=${(event: PointerEvent) => this.onWidthHandlePointerDown(event, band.id)}
+					></line>
+					<line x1="${leftX}" y1="${top}" x2="${leftX + cap}" y2="${top}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+					<line x1="${leftX}" y1="${bottom}" x2="${leftX + cap}" y2="${bottom}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+					<line x1="${centerX}" y1="${y}" x2="${leftX}" y2="${y}" stroke="${band.color}" stroke-width="2" opacity="0.45" stroke-dasharray="4 4" style="pointer-events: none;"></line>
+				` : null}
+				${showRightHandle ? svg`
+					<line
+						x1="${rightX}"
+						y1="${top}"
+						x2="${rightX}"
+						y2="${bottom}"
+						stroke="${band.color}"
+						stroke-width="4"
+						stroke-linecap="round"
+						style="cursor: ew-resize;"
+						data-width-handle="right"
+						@pointerdown=${(event: PointerEvent) => this.onWidthHandlePointerDown(event, band.id)}
+					></line>
+					<line x1="${rightX}" y1="${top}" x2="${rightX - cap}" y2="${top}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+					<line x1="${rightX}" y1="${bottom}" x2="${rightX - cap}" y2="${bottom}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+					<line x1="${centerX}" y1="${y}" x2="${rightX}" y2="${y}" stroke="${band.color}" stroke-width="2" opacity="0.45" stroke-dasharray="4 4" style="pointer-events: none;"></line>
+				` : null}
 			</g>
 		`
 	}
