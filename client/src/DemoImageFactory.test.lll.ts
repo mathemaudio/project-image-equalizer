@@ -8,7 +8,7 @@ export class DemoImageFactoryTest {
 
 	@Scenario('creates a colorful demo image data URL that loads at the requested size')
 	static async createsDemoImage(input = {}, assert: AssertFn): Promise<{ prefix: string, width: number, height: number }> {
-		const demo = DemoImageFactory.createDataUrl(64)
+		const demo = DemoImageFactory.createAbstractDataUrl(64)
 		assert(demo.dataUrl.startsWith('data:image/png'), 'Expected a PNG data URL to be produced')
 		assert(demo.width === 64 && demo.height === 64, 'Expected requested demo dimensions to be preserved')
 

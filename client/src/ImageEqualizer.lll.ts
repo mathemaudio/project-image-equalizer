@@ -301,6 +301,7 @@ export class ImageEqualizer extends LitElement {
 							</label>
 							<button class="primary" @click=${this.onLoadScenicDemoImage}>Load scenic demo</button>
 							<button class="primary" @click=${this.onLoadAbstractDemoImage}>Load abstract demo</button>
+							<button class="primary" @click=${this.onLoadMonaImage}>Load Mona image</button>
 							<button class="secondary" @click=${this.onResetBands}>Reset bands</button>
 						</div>
 					</div>
@@ -405,6 +406,11 @@ export class ImageEqualizer extends LitElement {
 		await this.loadAbstractDemoImage()
 	}
 
+	@Spec('Loads the bundled Mona image when the user clicks its button.')
+	private async onLoadMonaImage() {
+		await this.loadMonaImage()
+	}
+
 	@Spec('Creates and loads the scenic nature demo image into the equalizer workflow.')
 	private async loadScenicDemoImage() {
 		const demo = DemoImageFactory.createScenicDataUrl(320)
@@ -415,6 +421,11 @@ export class ImageEqualizer extends LitElement {
 	private async loadAbstractDemoImage() {
 		const demo = DemoImageFactory.createAbstractDataUrl(320)
 		await this.loadImageSource(demo.dataUrl, 'Abstract image', demo.width, demo.height)
+	}
+
+	@Spec('Loads the bundled Mona image asset into the equalizer workflow.')
+	private async loadMonaImage() {
+		await this.loadImageSource('/images/mona.webp', 'Mona image')
 	}
 
 	@Spec('Reads the chosen local image file and loads it for in-browser processing.')
@@ -637,7 +648,7 @@ export class ImageEqualizer extends LitElement {
 				color: colors[index % colors.length],
 				center: Math.pow(10, -2 + ((index + 0.5) / count) * 2),
 				gain: 0,
-				q: index % 2 === 0 ? 1.2 : 1.8,
+				q: 3.3,
 			})
 		}
 		return bands

@@ -10,7 +10,7 @@ export class FrequencyImageProcessorTest {
 
 	@Scenario('processes an image in the FFT domain and changes the output when band gains change')
 	static async shapesImageSpectra(input = {}, assert: AssertFn): Promise<{ neutralSize: string, shapedRange: string }> {
-		const demo = DemoImageFactory.createDataUrl(64)
+		const demo = DemoImageFactory.createAbstractDataUrl(64)
 		const image = await this.loadImage(demo.dataUrl)
 		const neutralBands: EqualizerBand[] = [
 			{ id: 1, label: 'Band 1', color: '#82e8ff', center: 0.18, gain: 0, q: 1.3 },
