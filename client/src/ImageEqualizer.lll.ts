@@ -187,11 +187,16 @@ export class ImageEqualizer extends LitElement {
 			background: rgba(255,255,255,0.04);
 			display: grid;
 			gap: 10px;
+			transition: opacity 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 		}
 
 		.band-card.active {
 			border-color: rgba(255,255,255,0.18);
 			box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+		}
+
+		.band-card.inactive {
+			opacity: 0.5;
 		}
 
 		.band-topline {
@@ -218,6 +223,11 @@ export class ImageEqualizer extends LitElement {
 			gap: 6px;
 			font-size: 0.82rem;
 			color: rgba(234,240,255,0.78);
+			transition: opacity 0.12s ease;
+		}
+
+		label.slider.disabled {
+			opacity: 0.5;
 		}
 
 		input[type='range'] {
@@ -347,35 +357,11 @@ export class ImageEqualizer extends LitElement {
 						.selectedBandId=${this.selectedBandId}
 						@band-select=${this.onBandSelected}
 						@band-change=${this.onBandDragged}
+						@band-q-change=${this.onBandQEventChanged}
 						@band-drag-state=${this.onBandDragStateChanged}
 					></equalizer-graph>
 
-					<div class="band-list">
-						${this.bands.map((band) => html`
-							<article class="band-card ${band.id === this.selectedBandId ? 'active' : ''}">
-								<div class="band-topline">
-									<div style="display:flex; align-items:center; gap:10px;">
-										<span class="band-swatch" style="background:${band.color};"></span>
-										<strong>${band.label}</strong>
-									</div>
-									<button class="secondary" @click=${() => this.onFocusBand(band.id)}>Focus</button>
-								</div>
-								<div class="band-readout">Center ${Math.round(band.center * 100)}% · Gain ${band.gain > 0 ? '+' : ''}${band.gain.toFixed(1)} dB</div>
-								<label class="slider">
-									<span>Width / Q</span>
-									<input
-										type="range"
-										min="0.4"
-										max="5"
-										step="0.1"
-										.value=${band.q.toFixed(1)}
-										aria-label="${band.label} width Q"
-										@input=${(event: Event) => this.onBandQChanged(event, band.id)}
-									/>
-								</label>
-							</article>
-						`)}
-					</div>
+					<div class="band-list">${this.renderBandCards()}</div>
 
 					<div class="processing-note">
 						This equalizer behaves like overlapping parametric bands in the UI, but the image math combines them into a radial FFT gain map so the phase stays untouched while magnitudes change.
@@ -474,6 +460,12 @@ export class ImageEqualizer extends LitElement {
 		this.scheduleProcessing(!event.detail.isDragging, event.detail.isDragging)
 	}
 
+	@Spec('Applies a graph-emitted width change to the selected band and schedules image reprocessing.')
+	private onBandQEventChanged(event: CustomEvent<{ id: number, q: number }>) {
+		this.applyBandQ(event.detail.id, event.detail.q)
+		this.scheduleProcessing(false, this.isDraggingBand)
+	}
+
 	@Spec('Updates a band width control and schedules image reprocessing.')
 	private onBandQChanged(event: Event, bandId: number) {
 		const input = event.target
@@ -481,13 +473,37 @@ export class ImageEqualizer extends LitElement {
 			return
 		}
 		const q = Number(input.value)
-		this.selectedBandId = bandId
-		this.bands = this.bands.map((band) =>
-			band.id === bandId
-				? { ...band, q: this.clamp(q, 0.4, 5) }
-				: band,
-		)
+		this.applyBandQ(bandId, q)
 		this.scheduleProcessing()
+	}
+
+	@Spec('Renders the band cards while keeping only the selected band width slider active.')
+	private renderBandCards(): TemplateResult[] {
+		return this.bands.map((band) => html`
+			<article class="band-card ${band.id === this.selectedBandId ? 'active' : 'inactive'}">
+				<div class="band-topline">
+					<div style="display:flex; align-items:center; gap:10px;">
+						<span class="band-swatch" style="background:${band.color};"></span>
+						<strong>${band.label}</strong>
+					</div>
+					<button class="secondary" @click=${() => this.onFocusBand(band.id)}>Focus</button>
+				</div>
+				<div class="band-readout">Center ${Math.round(band.center * 100)}% · Gain ${band.gain > 0 ? '+' : ''}${band.gain.toFixed(1)} dB</div>
+				<label class="slider ${band.id === this.selectedBandId ? '' : 'disabled'}">
+					<span>Width / Q</span>
+					<input
+						type="range"
+						min="0.4"
+						max="5"
+						step="0.1"
+						.value=${band.q.toFixed(1)}
+						aria-label="${band.label} width Q"
+						?disabled=${band.id !== this.selectedBandId}
+						@input=${(event: Event) => this.onBandQChanged(event, band.id)}
+					/>
+				</label>
+			</article>
+		`)
 	}
 
 	@Spec('Loads an image element from a source URL, stores previews, and triggers FFT processing.')
@@ -613,6 +629,16 @@ export class ImageEqualizer extends LitElement {
 			})
 		}
 		return bands
+	}
+
+	@Spec('Applies one band Q update while preserving the rest of the equalizer state.')
+	private applyBandQ(bandId: number, q: number) {
+		this.selectedBandId = bandId
+		this.bands = this.bands.map((band) =>
+			band.id === bandId
+				? { ...band, q: this.clamp(q, 0.4, 5) }
+				: band,
+		)
 	}
 
 	@Spec('Constrains editable band values to the safe visible range used by the UI and processor.')

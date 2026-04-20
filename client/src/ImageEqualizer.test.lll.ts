@@ -36,7 +36,7 @@ export class ImageEqualizerTest extends LitElement {
 		return html`<image-equalizer></image-equalizer>`
 	}
 
-	@Scenario('loads the demo image automatically and reprocesses when a band Q slider changes')
+	@Scenario('loads the demo image automatically and only enables the selected band Q slider while updates still work')
 	static async loadsDemoAndUpdatesBandWidth(input = {}, assert: AssertFn): Promise<{ sourceLabel: string, selectedBandText: string }> {
 		const equalizer = await this.getRenderedEqualizer()
 		await this.waitFor(() => equalizer.shadowRoot?.querySelector('#source-label')?.textContent?.trim() === 'Demo image', 4000, 40)
@@ -46,7 +46,18 @@ export class ImageEqualizerTest extends LitElement {
 		assert(sourceLabel === 'Demo image', 'Expected the demo image to load by default')
 
 		const firstQSlider = equalizer.shadowRoot?.querySelector<HTMLInputElement>('input[aria-label="Band 1 width Q"]')
+		const thirdQSlider = equalizer.shadowRoot?.querySelector<HTMLInputElement>('input[aria-label="Band 3 width Q"]')
 		assert(firstQSlider !== null && firstQSlider !== undefined, 'Expected the first band Q slider to be rendered')
+		assert(thirdQSlider !== null && thirdQSlider !== undefined, 'Expected the initially selected band Q slider to be rendered')
+		assert(firstQSlider.disabled, 'Expected a non-selected band Q slider to be disabled')
+		assert(!thirdQSlider.disabled, 'Expected the selected band Q slider to remain enabled')
+
+		const focusButton = Array.from(equalizer.shadowRoot?.querySelectorAll<HTMLButtonElement>('button.secondary') ?? []).find((button) => button.textContent?.trim() === 'Focus')
+		assert(focusButton instanceof HTMLButtonElement, 'Expected a Focus button to be rendered for band cards')
+		focusButton.click()
+		await equalizer.updateComplete
+
+		assert(!firstQSlider.disabled, 'Expected the focused band Q slider to become enabled')
 		firstQSlider.value = '3.3'
 		firstQSlider.dispatchEvent(new Event('input', { bubbles: true }))
 

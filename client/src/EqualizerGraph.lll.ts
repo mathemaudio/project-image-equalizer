@@ -3,7 +3,7 @@ import { customElement, property, state } from 'lit/decorators.js'
 import { Spec } from '@shared/lll.lll'
 import type { EqualizerBand } from './EqualizerBand.lll'
 
-@Spec('Renders the shared overlapping band graph and supports direct drag editing of center frequency and gain.')
+@Spec('Renders the shared overlapping band graph and supports direct drag editing of center frequency, gain, and selected-band width.')
 @customElement('equalizer-graph')
 export class EqualizerGraph extends LitElement {
 	static styles = css`
@@ -59,11 +59,14 @@ export class EqualizerGraph extends LitElement {
 	@state()
 	private dragBandId: number | null = null
 
+	@state()
+	private dragMode: 'position' | 'width' | null = null
+
 	private readonly graphWidth: number = 760
 	private readonly graphHeight: number = 360
 	private readonly graphPadding = { left: 58, right: 18, top: 20, bottom: 38 }
 
-	@Spec('Renders the frequency graph, band curves, and draggable control points.')
+	@Spec('Renders the frequency graph, band curves, draggable control points, and selected-band width brackets.')
 	render(): TemplateResult {
 		const totalGainPath = this.createCombinedPath()
 		const gainTicks = [-18, -12, -6, 0, 6, 12, 18]
@@ -89,6 +92,7 @@ export class EqualizerGraph extends LitElement {
 					${frequencyTicks.map((frequency) => this.renderFrequencyGridLine(frequency))}
 					<path d="${totalGainPath}" fill="none" stroke="url(#sum-line)" stroke-width="4" stroke-linecap="round"></path>
 					${this.bands.map((band) => this.renderBandCurve(band))}
+					${this.bands.map((band) => this.renderBandWidthHandles(band))}
 					${this.bands.map((band) => this.renderBandHandle(band))}
 					<text x="16" y="18" fill="rgba(231,238,255,0.82)" font-size="12">Gain (dB)</text>
 					<text x="${this.graphWidth - 118}" y="${this.graphHeight - 8}" fill="rgba(231,238,255,0.82)" font-size="12">Frequency →</text>
@@ -99,7 +103,7 @@ export class EqualizerGraph extends LitElement {
 				<span>Mid detail</span>
 				<span>Fine texture</span>
 			</div>
-			<div class="instructions">Drag a colored point left/right for frequency and up/down for gain. Use the Q slider on the matching band card for width.</div>
+			<div class="instructions">Drag a colored point left/right for frequency and up/down for gain. Drag the selected band brackets or use its matching Q slider for width.</div>
 		`
 	}
 
@@ -148,6 +152,55 @@ export class EqualizerGraph extends LitElement {
 		`
 	}
 
+	@Spec('Renders mirrored width brackets around the selected band so width can be edited directly on the graph.')
+	private renderBandWidthHandles(band: EqualizerBand): TemplateResult {
+		if (band.id !== this.selectedBandId) {
+			return svg``
+		}
+		const centerX = this.frequencyToX(band.center)
+		const y = this.gainToY(band.gain)
+		const spread = this.bandQToSpread(band.q)
+		const leftX = this.frequencyToX(this.clamp(band.center / Math.pow(2, spread), 0.01, 1))
+		const rightX = this.frequencyToX(this.clamp(band.center * Math.pow(2, spread), 0.01, 1))
+		const top = y - 18
+		const bottom = y + 10
+		const cap = 9
+		return svg`
+			<g aria-label="${band.label} width handles">
+				<line
+					x1="${leftX}"
+					y1="${top}"
+					x2="${leftX}"
+					y2="${bottom}"
+					stroke="${band.color}"
+					stroke-width="4"
+					stroke-linecap="round"
+					style="cursor: ew-resize;"
+					data-width-handle="left"
+					@pointerdown=${(event: PointerEvent) => this.onWidthHandlePointerDown(event, band.id)}
+				></line>
+				<line x1="${leftX}" y1="${top}" x2="${leftX + cap}" y2="${top}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+				<line x1="${leftX}" y1="${bottom}" x2="${leftX + cap}" y2="${bottom}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+				<line
+					x1="${rightX}"
+					y1="${top}"
+					x2="${rightX}"
+					y2="${bottom}"
+					stroke="${band.color}"
+					stroke-width="4"
+					stroke-linecap="round"
+					style="cursor: ew-resize;"
+					data-width-handle="right"
+					@pointerdown=${(event: PointerEvent) => this.onWidthHandlePointerDown(event, band.id)}
+				></line>
+				<line x1="${rightX}" y1="${top}" x2="${rightX - cap}" y2="${top}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+				<line x1="${rightX}" y1="${bottom}" x2="${rightX - cap}" y2="${bottom}" stroke="${band.color}" stroke-width="4" stroke-linecap="round" style="pointer-events: none;"></line>
+				<line x1="${centerX}" y1="${y}" x2="${leftX}" y2="${y}" stroke="${band.color}" stroke-width="2" opacity="0.45" stroke-dasharray="4 4" style="pointer-events: none;"></line>
+				<line x1="${centerX}" y1="${y}" x2="${rightX}" y2="${y}" stroke="${band.color}" stroke-width="2" opacity="0.45" stroke-dasharray="4 4" style="pointer-events: none;"></line>
+			</g>
+		`
+	}
+
 	@Spec('Renders one draggable band handle and its label.')
 	private renderBandHandle(band: EqualizerBand): TemplateResult {
 		const x = this.frequencyToX(band.center)
@@ -170,10 +223,11 @@ export class EqualizerGraph extends LitElement {
 		`
 	}
 
-	@Spec('Begins drag editing for the selected band and captures pointer updates.')
+	@Spec('Begins center and gain drag editing for the selected band and captures pointer updates.')
 	private onHandlePointerDown(event: PointerEvent, bandId: number) {
 		event.preventDefault()
 		this.dragBandId = bandId
+		this.dragMode = 'position'
 		this.selectedBandId = bandId
 		const target = event.currentTarget
 		if (target instanceof Element && 'setPointerCapture' in target) {
@@ -188,9 +242,32 @@ export class EqualizerGraph extends LitElement {
 		this.dispatchBandPosition(event)
 	}
 
-	@Spec('Updates the actively dragged band position from pointer movement across the graph.')
+	@Spec('Begins selected-band width editing from one of the mirrored bracket handles.')
+	private onWidthHandlePointerDown(event: PointerEvent, bandId: number) {
+		event.preventDefault()
+		this.dragBandId = bandId
+		this.dragMode = 'width'
+		this.selectedBandId = bandId
+		const target = event.currentTarget
+		if (target instanceof Element && 'setPointerCapture' in target) {
+			try {
+				(target as Element & { setPointerCapture(pointerId: number): void }).setPointerCapture(event.pointerId)
+			} catch {
+				// Synthetic test events may not own an active browser pointer; dragging can still proceed without capture.
+			}
+		}
+		this.dispatchBandSelection(bandId)
+		this.dispatchBandDragState(bandId, true)
+		this.dispatchBandWidthChange(event)
+	}
+
+	@Spec('Updates the actively dragged band position or width from pointer movement across the graph.')
 	private onPointerMove(event: PointerEvent) {
-		if (this.dragBandId === null) {
+		if (this.dragBandId === null || this.dragMode === null) {
+			return
+		}
+		if (this.dragMode === 'width') {
+			this.dispatchBandWidthChange(event)
 			return
 		}
 		this.dispatchBandPosition(event)
@@ -202,6 +279,7 @@ export class EqualizerGraph extends LitElement {
 			this.dispatchBandDragState(this.dragBandId, false)
 		}
 		this.dragBandId = null
+		this.dragMode = null
 	}
 
 	@Spec('Sends a user edit event that updates the dragged band center frequency and gain.')
@@ -232,6 +310,38 @@ export class EqualizerGraph extends LitElement {
 		}))
 	}
 
+	@Spec('Sends a user edit event that updates the dragged band width while keeping its center fixed.')
+	private dispatchBandWidthChange(event: PointerEvent) {
+		if (this.dragBandId === null) {
+			return
+		}
+		const band = this.bands.find((candidate) => candidate.id === this.dragBandId)
+		if (band === undefined) {
+			return
+		}
+		const svgElement = this.shadowRoot?.querySelector('svg')
+		if (svgElement === null || svgElement === undefined) {
+			return
+		}
+		const bounds = svgElement.getBoundingClientRect()
+		if (bounds.width === 0 || bounds.height === 0) {
+			return
+		}
+		const normalizedX = this.clamp((event.clientX - bounds.left) / bounds.width, 0, 1)
+		const x = this.graphPadding.left + (normalizedX * this.plotWidth())
+		const frequency = this.xToFrequency(x)
+		const spread = Math.max(0.05, Math.abs(Math.log2(Math.max(0.01, frequency) / Math.max(0.01, band.center))))
+		const q = this.clamp(1.6 / spread, 0.4, 5)
+		this.dispatchEvent(new CustomEvent('band-q-change', {
+			bubbles: true,
+			composed: true,
+			detail: {
+				id: this.dragBandId,
+				q,
+			},
+		}))
+	}
+
 	@Spec('Sends a user selection event when a band handle becomes active.')
 	private dispatchBandSelection(bandId: number) {
 		this.dispatchEvent(new CustomEvent('band-select', {
@@ -256,7 +366,7 @@ export class EqualizerGraph extends LitElement {
 		for (let step = 0; step <= 120; step += 1) {
 			const frequency = 0.01 + (step / 120) * 0.99
 			const safeCenter = Math.max(0.01, band.center)
-			const spread = Math.max(0.05, 1.6 / Math.max(0.35, band.q))
+			const spread = this.bandQToSpread(band.q)
 			const distance = Math.log2(frequency / safeCenter)
 			const influence = Math.exp(-0.5 * Math.pow(distance / spread, 2))
 			const gain = band.gain * influence
@@ -275,7 +385,7 @@ export class EqualizerGraph extends LitElement {
 			let gain = 0
 			for (const band of this.bands) {
 				const safeCenter = Math.max(0.01, band.center)
-				const spread = Math.max(0.05, 1.6 / Math.max(0.35, band.q))
+				const spread = this.bandQToSpread(band.q)
 				const distance = Math.log2(frequency / safeCenter)
 				const influence = Math.exp(-0.5 * Math.pow(distance / spread, 2))
 				gain += band.gain * influence
@@ -323,6 +433,11 @@ export class EqualizerGraph extends LitElement {
 	@Spec('Returns the drawable plot height inside graph padding.')
 	private plotHeight(): number {
 		return this.graphHeight - this.graphPadding.top - this.graphPadding.bottom
+	}
+
+	@Spec('Converts a band Q setting into the logarithmic spread used by curves and width brackets.')
+	private bandQToSpread(q: number): number {
+		return Math.max(0.05, 1.6 / Math.max(0.35, q))
 	}
 
 	@Spec('Constrains pointer-derived graph coordinates to safe interactive bounds.')

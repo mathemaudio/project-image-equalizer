@@ -79,6 +79,46 @@ export class EqualizerGraphTest extends LitElement {
 		return { selectedBandId, changedBandId }
 	}
 
+	@Scenario('dragging a selected band width bracket emits a mirrored width change event')
+	static async dragsSelectedBandWidthBracket(input = {}, assert: AssertFn): Promise<{ selectedBandId: number, changedBandId: number, q: number }> {
+		const graph = await this.getRenderedGraph()
+		const svgElement = graph.shadowRoot?.querySelector('svg')
+		assert(svgElement instanceof SVGElement, 'Expected equalizer graph SVG to render')
+		Object.defineProperty(svgElement, 'getBoundingClientRect', {
+			value: () => new DOMRect(0, 0, 760, 360),
+		})
+
+		let selectedBandId = 0
+		let changedBandId = 0
+		let q = 0
+		graph.addEventListener('band-select', (event: Event) => {
+			const customEvent = event as CustomEvent<{ id: number }>
+			selectedBandId = customEvent.detail.id
+		})
+		graph.addEventListener('band-q-change', (event: Event) => {
+			const customEvent = event as CustomEvent<{ id: number, q: number }>
+			changedBandId = customEvent.detail.id
+			q = customEvent.detail.q
+		})
+
+		const widthHandle = graph.shadowRoot?.querySelector<SVGLineElement>('line[data-width-handle="right"]')
+		const shell = graph.shadowRoot?.querySelector('button.graph-shell')
+		assert(widthHandle instanceof SVGLineElement, 'Expected selected band width bracket to render')
+		assert(shell instanceof HTMLButtonElement, 'Expected graph shell button to render')
+
+		const startX = Number(widthHandle.getAttribute('x1') ?? '180')
+		const startY = Number(widthHandle.getAttribute('y1') ?? '120')
+		widthHandle.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: startX, clientY: startY }))
+		shell.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: startX + 90, clientY: startY }))
+		shell.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: startX + 90, clientY: startY }))
+		await graph.updateComplete
+
+		assert(selectedBandId === 1, 'Expected width interaction to keep the selected band active')
+		assert(changedBandId === 1, 'Expected width interaction to emit a Q change for the selected band')
+		assert(q > 0.4 && q <= 5, 'Expected width interaction to emit a clamped Q value')
+		return { selectedBandId, changedBandId, q }
+	}
+
 	@Spec('Finds the visible equalizer graph instance rendered by the active test panel.')
 	private static async getRenderedGraph(): Promise<EqualizerGraph> {
 		await this.waitFor(() => this.findBestRenderedPanel() !== null, 1200, 20)
