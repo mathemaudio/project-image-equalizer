@@ -323,12 +323,12 @@ export class ImageEqualizer extends LitElement {
 						</div>
 						<div class="actions">
 							<label class="upload">
-								Upload image
+								⇧ Upload
 								<input type="file" accept="image/*" @change=${this.onFileSelected} aria-label="Upload image" />
 							</label>
-							<button class="primary" @click=${this.onLoadScenicDemoImage}>Load scenic demo</button>
-							<button class="primary" @click=${this.onLoadAbstractDemoImage}>Load abstract demo</button>
-							<button class="primary" @click=${this.onLoadMonaImage}>Load Mona image</button>
+							<button class="primary" @click=${this.onLoadScenicDemoImage}>Procedural</button>
+							<button class="primary" @click=${this.onLoadAbstractDemoImage}>Abstract</button>
+							<button class="primary" @click=${this.onLoadMonaImage}>Mona Lisa</button>
 							<button class="secondary" @click=${this.onResetBands}>Reset bands</button>
 						</div>
 					</div>
