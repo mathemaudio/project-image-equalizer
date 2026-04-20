@@ -2,7 +2,7 @@ import Database from 'better-sqlite3'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { AssertFn, Scenario, Spec } from '@shared/lll.lll'
+import { AssertFn, Scenario, Spec, WaitForFn, ScenarioParameter } from '@shared/lll.lll'
 import { GreetingLogDatabase } from './GreetingLogDatabase.lll'
 import { Playground } from './Playground.lll'
 
@@ -11,7 +11,10 @@ export class PlaygroundTest {
 	testType = "unit"
 
 	@Scenario('registers hello and multiply API routes')
-	static async registersTypedEndpoints(input = {}, assert: AssertFn): Promise<{ registeredPaths: string[] }> {
+	static async registersTypedEndpoints(scenario: ScenarioParameter): Promise<{ registeredPaths: string[] }> {
+		const input = scenario.input
+		const assert: AssertFn = scenario.assert
+		const waitFor: WaitForFn = scenario.waitFor
 		const router = Playground.createApiPlaygroundRouter()
 		const stack = (router as unknown as { stack?: Array<{ route?: { path?: string } }> }).stack ?? []
 		const registeredPaths = stack
@@ -24,7 +27,10 @@ export class PlaygroundTest {
 	}
 
 	@Scenario('stores greeted names in the default SQLite schema')
-	static async storesGreetingLogEntries(input = {}, assert: AssertFn): Promise<{ storedId: number; storedName: string }> {
+	static async storesGreetingLogEntries(scenario: ScenarioParameter): Promise<{ storedId: number; storedName: string }> {
+		const input = scenario.input
+		const assert: AssertFn = scenario.assert
+		const waitFor: WaitForFn = scenario.waitFor
 		const tempDirectory = mkdtempSync(join(tmpdir(), 'greeting-log-db-'))
 		const databasePath = join(tempDirectory, 'database.db')
 		const greetingLogDatabase = new GreetingLogDatabase(databasePath)

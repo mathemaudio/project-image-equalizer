@@ -299,7 +299,8 @@ export class ImageEqualizer extends LitElement {
 								Upload image
 								<input type="file" accept="image/*" @change=${this.onFileSelected} aria-label="Upload image" />
 							</label>
-							<button class="primary" @click=${this.onLoadDemoImage}>Load demo image</button>
+							<button class="primary" @click=${this.onLoadScenicDemoImage}>Load scenic demo</button>
+							<button class="primary" @click=${this.onLoadAbstractDemoImage}>Load abstract demo</button>
 							<button class="secondary" @click=${this.onResetBands}>Reset bands</button>
 						</div>
 					</div>
@@ -389,20 +390,31 @@ export class ImageEqualizer extends LitElement {
 		`
 	}
 
-	@Spec('Loads the built-in demo image so the app is immediately explorable.')
+	@Spec('Loads the built-in scenic demo image so the app is immediately explorable.')
 	firstUpdated() {
-		void this.loadDemoImage()
+		void this.loadScenicDemoImage()
 	}
 
-	@Spec('Loads the generated demo image when the user clicks the demo button.')
-	private async onLoadDemoImage() {
-		await this.loadDemoImage()
+	@Spec('Loads the procedural scenic demo image when the user clicks its button.')
+	private async onLoadScenicDemoImage() {
+		await this.loadScenicDemoImage()
 	}
 
-	@Spec('Creates and loads the colorful demo image into the equalizer workflow.')
-	private async loadDemoImage() {
-		const demo = DemoImageFactory.createDataUrl(320)
-		await this.loadImageSource(demo.dataUrl, 'Demo image', demo.width, demo.height)
+	@Spec('Loads the original abstract demo image when the user clicks its button.')
+	private async onLoadAbstractDemoImage() {
+		await this.loadAbstractDemoImage()
+	}
+
+	@Spec('Creates and loads the scenic nature demo image into the equalizer workflow.')
+	private async loadScenicDemoImage() {
+		const demo = DemoImageFactory.createScenicDataUrl(320)
+		await this.loadImageSource(demo.dataUrl, 'Scenic demo image', demo.width, demo.height)
+	}
+
+	@Spec('Creates and loads the colorful abstract demo image into the equalizer workflow.')
+	private async loadAbstractDemoImage() {
+		const demo = DemoImageFactory.createAbstractDataUrl(320)
+		await this.loadImageSource(demo.dataUrl, 'Abstract demo image', demo.width, demo.height)
 	}
 
 	@Spec('Reads the chosen local image file and loads it for in-browser processing.')

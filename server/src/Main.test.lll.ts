@@ -1,5 +1,5 @@
 import express from 'express'
-import { AssertFn, Scenario, Spec } from '@shared/lll.lll'
+import { AssertFn, Scenario, Spec, WaitForFn, ScenarioParameter, SubjectFactory } from '@shared/lll.lll'
 import { Main } from './Main.lll'
 
 @Spec('Covers server bootstrap behavior for Main.')
@@ -7,7 +7,10 @@ export class MainTest {
 	testType = "unit"
 
 	@Scenario('starts listening on configured PORT during bootstrap')
-	static async startsListeningOnConfiguredPort(input = {}, assert: AssertFn): Promise<{ listenedPort: number, callbackInvoked: boolean }> {
+	static async startsListeningOnConfiguredPort(subjectFactory: SubjectFactory<unknown>, scenario: ScenarioParameter): Promise<{ listenedPort: number, callbackInvoked: boolean }> {
+		const input = scenario.input
+		const assert: AssertFn = scenario.assert
+		const waitFor: WaitForFn = scenario.waitFor
 		const application = express.application as typeof express.application & {
 			listen: typeof express.application.listen
 		}
@@ -28,7 +31,7 @@ export class MainTest {
 			}
 			return application as unknown as ReturnType<typeof express.application.listen>
 		}) as typeof express.application.listen
-		process.env.PORT = '26883'
+		process.env.PORT = '43979'
 
 		try {
 			new Main()
@@ -41,7 +44,7 @@ export class MainTest {
 			}
 		}
 
-		assert(listenedPort === 26883, 'Expected Main to listen on the configured PORT')
+		assert(listenedPort === 43979, 'Expected Main to listen on the configured PORT')
 		assert(callbackInvoked, 'Expected Main to invoke the listen callback')
 		return { listenedPort, callbackInvoked }
 	}

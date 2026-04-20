@@ -1,7 +1,7 @@
 module.exports = {
 	apps: [
 		{
-			name: 'project-efficient-cat-8i-server',
+			name: 'please-rename-the-server',
 			script: 'npx',
 			args: 'tsx watch src/Main.lll.ts',
 			watch: false, // tsx watch handles reloads
@@ -12,11 +12,11 @@ module.exports = {
 			ignore_watch: ['node_modules', '.git', 'dist'],
 			env: {
 				NODE_ENV: 'development',
-				PORT: 26882
+				PORT: 8484
 			}
 		},
 		{
-			name: 'project-efficient-cat-8i-server-emit',
+			name: 'please-rename-the-server-emit',
 			script: 'npx',
 			args: 'tsc -w -p tsconfig.json --preserveWatchOutput',
 			watch: false,

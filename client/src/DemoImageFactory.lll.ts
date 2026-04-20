@@ -1,17 +1,96 @@
 import { Spec } from '@shared/lll.lll'
 
-@Spec('Builds a playful in-browser demo image so the equalizer can be explored without uploading a file first.')
+@Spec('Builds procedural in-browser demo images so the equalizer can be explored without uploading a file first.')
 export class DemoImageFactory {
-	@Spec('Creates a colorful square demo bitmap and returns it as a data URL with its dimensions.')
-	static createDataUrl(size: number = 320): { dataUrl: string, width: number, height: number } {
-		const canvas = document.createElement('canvas')
-		canvas.width = size
-		canvas.height = size
-		const context = canvas.getContext('2d')
-		if (context === null) {
-			throw new Error('2D canvas context is required to create the demo image')
+	@Spec('Creates the scenic default demo bitmap and returns it as a data URL with its dimensions.')
+	static createScenicDataUrl(size: number = 320): { dataUrl: string, width: number, height: number } {
+		const context = this.createContext(size)
+		const skyGradient = context.createLinearGradient(0, 0, 0, size)
+		skyGradient.addColorStop(0, '#7ac8ff')
+		skyGradient.addColorStop(0.45, '#c9ebff')
+		skyGradient.addColorStop(0.72, '#f8f3d0')
+		skyGradient.addColorStop(1, '#5ea86e')
+		context.fillStyle = skyGradient
+		context.fillRect(0, 0, size, size)
+
+		context.save()
+		context.globalAlpha = 0.22
+		for (let index = 0; index < 10; index += 1) {
+			const cloudY = size * (0.12 + index * 0.055)
+			context.fillStyle = index % 2 === 0 ? '#ffffff' : '#dff3ff'
+			context.beginPath()
+			context.ellipse(size * (0.18 + (index % 4) * 0.2), cloudY, size * 0.16, size * 0.04, 0, 0, Math.PI * 2)
+			context.ellipse(size * (0.32 + (index % 3) * 0.2), cloudY + size * 0.01, size * 0.2, size * 0.05, 0, 0, Math.PI * 2)
+			context.fill()
+		}
+		context.restore()
+
+		context.fillStyle = '#6f8fb6'
+		this.fillMountainRange(context, size, [
+			[size * -0.05, size * 0.58],
+			[size * 0.12, size * 0.33],
+			[size * 0.28, size * 0.56],
+			[size * 0.46, size * 0.29],
+			[size * 0.63, size * 0.58],
+			[size * 0.82, size * 0.36],
+			[size * 1.05, size * 0.6],
+		])
+		context.fillStyle = '#4d6b59'
+		this.fillMountainRange(context, size, [
+			[size * -0.05, size * 0.72],
+			[size * 0.16, size * 0.47],
+			[size * 0.36, size * 0.74],
+			[size * 0.54, size * 0.5],
+			[size * 0.73, size * 0.74],
+			[size * 0.92, size * 0.52],
+			[size * 1.05, size * 0.76],
+		])
+
+		context.save()
+		context.strokeStyle = 'rgba(255,255,255,0.3)'
+		context.lineWidth = Math.max(1.4, size / 180)
+		for (let index = 0; index < 14; index += 1) {
+			const y = size * (0.58 + index * 0.03)
+			context.beginPath()
+			context.moveTo(0, y)
+			for (let x = 0; x <= size; x += 8) {
+				const wave = Math.sin((x / size) * Math.PI * 4 + index * 0.5) * (size / 170)
+				context.lineTo(x, y + wave)
+			}
+			context.stroke()
+		}
+		context.restore()
+
+		context.fillStyle = '#2e5a38'
+		for (let index = 0; index < 13; index += 1) {
+			const baseX = size * (0.04 + index * 0.077)
+			const height = size * (0.12 + (index % 4) * 0.02)
+			this.fillTree(context, baseX, size * 0.82, size * 0.03, height)
+		}
+		context.fillStyle = '#203625'
+		for (let index = 0; index < 11; index += 1) {
+			const baseX = size * (0.02 + index * 0.094)
+			const height = size * (0.09 + (index % 3) * 0.018)
+			this.fillTree(context, baseX, size * 0.92, size * 0.028, height)
 		}
 
+		context.save()
+		const glow = context.createRadialGradient(size * 0.76, size * 0.24, size * 0.02, size * 0.76, size * 0.24, size * 0.13)
+		glow.addColorStop(0, 'rgba(255,250,223,0.95)')
+		glow.addColorStop(0.5, 'rgba(255,235,182,0.35)')
+		glow.addColorStop(1, 'rgba(255,255,255,0)')
+		context.fillStyle = glow
+		context.beginPath()
+		context.arc(size * 0.76, size * 0.24, size * 0.13, 0, Math.PI * 2)
+		context.fill()
+		context.restore()
+
+		return this.createResult(context, size)
+	}
+
+	@Spec('Creates the original abstract demo bitmap and returns it as a data URL with its dimensions.')
+	static createAbstractDataUrl(size: number = 320): { dataUrl: string, width: number, height: number } {
+		const context = this.createContext(size)
 		const gradient = context.createLinearGradient(0, 0, size, size)
 		gradient.addColorStop(0, '#ff7a7a')
 		gradient.addColorStop(0.28, '#ffd86b')
@@ -71,8 +150,54 @@ export class DemoImageFactory {
 		context.stroke()
 		context.restore()
 
+		return this.createResult(context, size)
+	}
+
+	@Spec('Creates a sized 2D drawing context for demo image rendering.')
+	private static createContext(size: number): CanvasRenderingContext2D {
+		const canvas = document.createElement('canvas')
+		canvas.width = size
+		canvas.height = size
+		const context = canvas.getContext('2d')
+		if (context === null) {
+			throw new Error('2D canvas context is required to create the demo image')
+		}
+		return context
+	}
+
+	@Spec('Closes and fills a mountain silhouette across the canvas width.')
+	private static fillMountainRange(context: CanvasRenderingContext2D, size: number, points: Array<[number, number]>) {
+		context.beginPath()
+		context.moveTo(points[0][0], points[0][1])
+		for (const point of points.slice(1)) {
+			context.lineTo(point[0], point[1])
+		}
+		context.lineTo(size, size)
+		context.lineTo(0, size)
+		context.closePath()
+		context.fill()
+	}
+
+	@Spec('Draws a simple layered evergreen silhouette at the requested position.')
+	private static fillTree(context: CanvasRenderingContext2D, baseX: number, baseY: number, halfWidth: number, height: number) {
+		context.fillRect(baseX - halfWidth * 0.16, baseY - height * 0.18, halfWidth * 0.32, height * 0.18)
+		for (let tier = 0; tier < 3; tier += 1) {
+			const tierBaseY = baseY - tier * height * 0.22
+			const tierHalfWidth = halfWidth * (1.6 - tier * 0.28)
+			const tierHeight = height * (0.42 - tier * 0.06)
+			context.beginPath()
+			context.moveTo(baseX, tierBaseY - tierHeight)
+			context.lineTo(baseX + tierHalfWidth, tierBaseY)
+			context.lineTo(baseX - tierHalfWidth, tierBaseY)
+			context.closePath()
+			context.fill()
+		}
+	}
+
+	@Spec('Packages a rendered demo context into the common data URL response format.')
+	private static createResult(context: CanvasRenderingContext2D, size: number): { dataUrl: string, width: number, height: number } {
 		return {
-			dataUrl: canvas.toDataURL('image/png'),
+			dataUrl: context.canvas.toDataURL('image/png'),
 			width: size,
 			height: size,
 		}

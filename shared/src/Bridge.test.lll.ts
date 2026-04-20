@@ -1,5 +1,5 @@
 import './Bridge.lll'
-import { AssertFn, Scenario, Spec } from './lll.lll'
+import { AssertFn, Scenario, Spec, WaitForFn, ScenarioParameter } from './lll.lll'
 import { Bridge } from './Bridge.lll'
 import type { BridgeApp } from './BridgeApp.lll'
 import type { BridgeRequest } from './BridgeRequest.lll'
@@ -11,10 +11,10 @@ export class BridgeTest {
 	testType = 'unit'
 
 	@Scenario('registers typed endpoint and returns validated handler output')
-	static async registersTypedEndpointAndReturnsValidatedHandlerOutput(
-		input = {},
-		assert: AssertFn
-	): Promise<{ statusCode: number, payload: string, registeredPath: string }> {
+	static async registersTypedEndpointAndReturnsValidatedHandlerOutput(scenario: ScenarioParameter): Promise<{ statusCode: number, payload: string, registeredPath: string }> {
+		const input = scenario.input
+		const assert: AssertFn = scenario.assert
+		const waitFor: WaitForFn = scenario.waitFor
 		let registeredPath = ''
 		let registeredHandler:
 			| ((req: BridgeRequest, res: BridgeResponse) => Promise<BridgeResponse | void> | BridgeResponse | void)
@@ -54,10 +54,10 @@ export class BridgeTest {
 	}
 
 	@Scenario('typedFetch forwards JSON request and parses JSON response')
-	static async typedFetchForwardsJsonRequestAndParsesResponse(
-		input = {},
-		assert: AssertFn
-	): Promise<{ method: string, body: string, response: { product: number } }> {
+	static async typedFetchForwardsJsonRequestAndParsesResponse(scenario: ScenarioParameter): Promise<{ method: string, body: string, response: { product: number } }> {
+		const input = scenario.input
+		const assert: AssertFn = scenario.assert
+		const waitFor: WaitForFn = scenario.waitFor
 		let method = ''
 		let body = ''
 
