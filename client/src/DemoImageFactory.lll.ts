@@ -25,6 +25,17 @@ export class DemoImageFactory {
 		}
 		context.restore()
 
+		context.save()
+		context.strokeStyle = 'rgba(38, 53, 74, 0.7)'
+		context.lineWidth = Math.max(1.2, size / 190)
+		for (let index = 0; index < 7; index += 1) {
+			const birdX = size * (0.14 + index * 0.1)
+			const birdY = size * (0.18 + (index % 3) * 0.06)
+			const wingSpan = size * (0.018 + (index % 2) * 0.007)
+			this.strokeBird(context, birdX, birdY, wingSpan)
+		}
+		context.restore()
+
 		context.fillStyle = '#6f8fb6'
 		this.fillMountainRange(context, size, [
 			[size * -0.05, size * 0.58],
@@ -192,6 +203,15 @@ export class DemoImageFactory {
 			context.closePath()
 			context.fill()
 		}
+	}
+
+	@Spec('Draws a small flying bird silhouette with two curved wings.')
+	private static strokeBird(context: CanvasRenderingContext2D, centerX: number, centerY: number, wingSpan: number) {
+		context.beginPath()
+		context.moveTo(centerX - wingSpan, centerY)
+		context.quadraticCurveTo(centerX - wingSpan * 0.45, centerY - wingSpan * 0.85, centerX, centerY)
+		context.quadraticCurveTo(centerX + wingSpan * 0.45, centerY - wingSpan * 0.85, centerX + wingSpan, centerY)
+		context.stroke()
 	}
 
 	@Spec('Packages a rendered demo context into the common data URL response format.')

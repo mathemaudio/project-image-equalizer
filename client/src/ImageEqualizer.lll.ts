@@ -408,13 +408,13 @@ export class ImageEqualizer extends LitElement {
 	@Spec('Creates and loads the scenic nature demo image into the equalizer workflow.')
 	private async loadScenicDemoImage() {
 		const demo = DemoImageFactory.createScenicDataUrl(320)
-		await this.loadImageSource(demo.dataUrl, 'Scenic demo image', demo.width, demo.height)
+		await this.loadImageSource(demo.dataUrl, 'Scenic image', demo.width, demo.height)
 	}
 
 	@Spec('Creates and loads the colorful abstract demo image into the equalizer workflow.')
 	private async loadAbstractDemoImage() {
 		const demo = DemoImageFactory.createAbstractDataUrl(320)
-		await this.loadImageSource(demo.dataUrl, 'Abstract demo image', demo.width, demo.height)
+		await this.loadImageSource(demo.dataUrl, 'Abstract image', demo.width, demo.height)
 	}
 
 	@Spec('Reads the chosen local image file and loads it for in-browser processing.')
