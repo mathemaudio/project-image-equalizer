@@ -55,10 +55,18 @@ export class ImageEqualizer extends LitElement {
 			color: rgba(234, 240, 255, 0.75);
 		}
 
+		.layout-header {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			gap: 16px;
+			align-items: start;
+		}
+
 		.actions {
-			display: flex;
-			flex-wrap: wrap;
+			display: grid;
 			gap: 10px;
+			justify-items: stretch;
+			align-content: start;
 		}
 
 		label.upload,
@@ -177,7 +185,6 @@ export class ImageEqualizer extends LitElement {
 		.band-list {
 			display: grid;
 			gap: 10px;
-			grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
 		}
 
 		.band-card {
@@ -195,13 +202,9 @@ export class ImageEqualizer extends LitElement {
 			box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 		}
 
-		.band-card.inactive {
-			opacity: 0.5;
-		}
-
 		.band-topline {
 			display: flex;
-			justify-content: space-between;
+			justify-content: flex-start;
 			gap: 12px;
 			align-items: center;
 		}
@@ -248,6 +251,12 @@ export class ImageEqualizer extends LitElement {
 				grid-template-columns: 1fr;
 			}
 		}
+
+		@media (max-width: 840px) {
+			.layout-header {
+				grid-template-columns: 1fr;
+			}
+		}
 	`
 
 	@state()
@@ -289,10 +298,28 @@ export class ImageEqualizer extends LitElement {
 		return html`
 			<main>
 				<section class="panel preview-panel">
-					<div class="section-heading">
+					<div class="layout-header">
 						<div>
-							<h2>Image previews</h2>
-							<p class="subtle">Original up top, processed below, all in your browser.</p>
+							<div class="section-heading">
+								<div>
+									<h2>Image previews</h2>
+									<p class="subtle">Original up top, processed below, all in your browser.</p>
+								</div>
+							</div>
+							<div class="status-grid">
+								<div class="stat">
+									<div class="stat-label">Source</div>
+									<div class="stat-value" id="source-label">${this.sourceLabel}</div>
+								</div>
+								<div class="stat">
+									<div class="stat-label">Dimensions</div>
+									<div class="stat-value" id="source-dimensions">${this.sourceDimensionsText}</div>
+								</div>
+								<div class="stat">
+									<div class="stat-label">Processing</div>
+									<div class="stat-value" id="processing-state">${this.processingStateText}</div>
+								</div>
+							</div>
 						</div>
 						<div class="actions">
 							<label class="upload">
@@ -306,20 +333,6 @@ export class ImageEqualizer extends LitElement {
 						</div>
 					</div>
 
-					<div class="status-grid">
-						<div class="stat">
-							<div class="stat-label">Source</div>
-							<div class="stat-value" id="source-label">${this.sourceLabel}</div>
-						</div>
-						<div class="stat">
-							<div class="stat-label">Dimensions</div>
-							<div class="stat-value" id="source-dimensions">${this.sourceDimensionsText}</div>
-						</div>
-						<div class="stat">
-							<div class="stat-label">Processing</div>
-							<div class="stat-value" id="processing-state">${this.processingStateText}</div>
-						</div>
-					</div>
 
 					<div class="preview-stack">
 						<figure>
@@ -450,11 +463,6 @@ export class ImageEqualizer extends LitElement {
 		this.scheduleProcessing()
 	}
 
-	@Spec('Focuses a band card and corresponding graph handle for easier editing.')
-	private onFocusBand(bandId: number) {
-		this.selectedBandId = bandId
-	}
-
 	@Spec('Selects the active band when the shared graph reports a handle interaction.')
 	private onBandSelected(event: CustomEvent<{ id: number }>) {
 		this.selectedBandId = event.detail.id
@@ -500,33 +508,30 @@ export class ImageEqualizer extends LitElement {
 		this.scheduleProcessing()
 	}
 
-	@Spec('Renders the band cards while keeping only the selected band width slider active.')
-	private renderBandCards(): TemplateResult[] {
-		return this.bands.map((band) => html`
-			<article class="band-card ${band.id === this.selectedBandId ? 'active' : 'inactive'}">
+	@Spec('Renders only the selected band card so the width control stays visible without the inactive band clutter.')
+	private renderBandCards(): TemplateResult {
+		const selectedBand = this.bands.find((band) => band.id === this.selectedBandId) ?? this.bands[0]
+		return html`
+			<article class="band-card active">
 				<div class="band-topline">
-					<div style="display:flex; align-items:center; gap:10px;">
-						<span class="band-swatch" style="background:${band.color};"></span>
-						<strong>${band.label}</strong>
-					</div>
-					<button class="secondary" @click=${() => this.onFocusBand(band.id)}>Focus</button>
+					<span class="band-swatch" style="background:${selectedBand.color};"></span>
+					<strong>${selectedBand.label}</strong>
 				</div>
-				<div class="band-readout">Center ${Math.round(band.center * 100)}% · Gain ${band.gain > 0 ? '+' : ''}${band.gain.toFixed(1)} dB</div>
-				<label class="slider ${band.id === this.selectedBandId ? '' : 'disabled'}">
+				<div class="band-readout">Center ${Math.round(selectedBand.center * 100)}% · Gain ${selectedBand.gain > 0 ? '+' : ''}${selectedBand.gain.toFixed(1)} dB</div>
+				<label class="slider">
 					<span>Width / Q</span>
 					<input
 						type="range"
 						min="0.4"
 						max="5"
 						step="0.1"
-						.value=${band.q.toFixed(1)}
-						aria-label="${band.label} width Q"
-						?disabled=${band.id !== this.selectedBandId}
-						@input=${(event: Event) => this.onBandQChanged(event, band.id)}
+						.value=${selectedBand.q.toFixed(1)}
+						aria-label="${selectedBand.label} width Q"
+						@input=${(event: Event) => this.onBandQChanged(event, selectedBand.id)}
 					/>
 				</label>
 			</article>
-		`)
+		`
 	}
 
 	@Spec('Loads an image element from a source URL, stores previews, and triggers FFT processing.')

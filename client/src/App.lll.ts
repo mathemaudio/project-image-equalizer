@@ -43,20 +43,6 @@ export class App extends LitElement {
 			color: rgba(233, 239, 255, 0.82);
 		}
 
-		.badges {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 10px;
-		}
-
-		.badge {
-			padding: 8px 12px;
-			border-radius: 999px;
-			background: rgba(255, 255, 255, 0.06);
-			border: 1px solid rgba(255, 255, 255, 0.1);
-			font-size: 0.84rem;
-			color: rgba(233, 239, 255, 0.76);
-		}
 	`
 
 	@Spec('Renders the app shell and the interactive image equalizer experience.')
@@ -64,11 +50,6 @@ export class App extends LitElement {
 		return html`
 			<main>
 				<header>
-					<div class="badges">
-						<span class="badge">Client-side only</span>
-						<span class="badge">FFT-domain magnitude shaping</span>
-						<span class="badge">5 draggable bands by default</span>
-					</div>
 					<h1>Interactive Frequency-Domain Image Equalizer</h1>
 					<p class="lead">
 						Upload any image, sculpt overlapping frequency bands like a parametric EQ, and watch the processed version respond live below the original.
