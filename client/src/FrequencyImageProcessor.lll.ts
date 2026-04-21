@@ -47,7 +47,6 @@ export class FrequencyImageProcessor {
 		const spectrogramReal = windowedLuminance.slice()
 		const spectrogramImaginary = new Float64Array(pixelCount)
 		this.perform2dFft(spectrogramReal, spectrogramImaginary, size, false)
-		const spectrogramProfile = this.createSpectrogramProfile(spectrogramReal, spectrogramImaginary, size)
 
 		const real = luminance.slice()
 		const imaginary = new Float64Array(pixelCount)
@@ -63,11 +62,14 @@ export class FrequencyImageProcessor {
 				const index = (y * size) + x
 				real[index] *= gain
 				imaginary[index] *= gain
+				spectrogramReal[index] *= gain
+				spectrogramImaginary[index] *= gain
 				gainExtremes.min = Math.min(gainExtremes.min, gain)
 				gainExtremes.max = Math.max(gainExtremes.max, gain)
 			}
 		}
 
+		const spectrogramProfile = this.createSpectrogramProfile(spectrogramReal, spectrogramImaginary, size)
 		this.perform2dFft(real, imaginary, size, true)
 		const averageProcessedEnergy = this.calculateAverageMagnitude(real, imaginary)
 		const outputImage = new ImageData(size, size)
@@ -157,7 +159,7 @@ export class FrequencyImageProcessor {
 		return Math.pow(10, totalDecibels / 20)
 	}
 
-	@Spec('Builds a normalized radial spectrum profile so the equalizer graph can faintly visualize live FFT energy behind the bands.')
+	@Spec('Builds a normalized radial spectrum profile from the current shaped FFT magnitudes so the equalizer graph visualizes the live processed spectrum behind the bands.')
 	private static createSpectrogramProfile(real: Float64Array, imaginary: Float64Array, size: number): number[] {
 		const bucketCount = 96
 		const totals = new Float64Array(bucketCount)

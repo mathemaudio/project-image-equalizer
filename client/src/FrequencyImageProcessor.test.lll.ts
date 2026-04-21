@@ -9,7 +9,7 @@ export class FrequencyImageProcessorTest {
 	testType = 'unit'
 
 	@Scenario('processes an image in the FFT domain and changes the output when band gains change')
-	static async shapesImageSpectra(scenario: ScenarioParameter): Promise<{ neutralSize: string, shapedRange: string, windowedProfileDistance: string }> {
+	static async shapesImageSpectra(scenario: ScenarioParameter): Promise<{ neutralSize: string, shapedRange: string, windowedProfileDistance: string, processedProfileDistance: string }> {
 		const assert: AssertFn = scenario.assert
 		const demo = DemoImageFactory.createAbstractDataUrl(64)
 		const scenicDemo = DemoImageFactory.createScenicDataUrl(64)
@@ -27,6 +27,7 @@ export class FrequencyImageProcessorTest {
 		const scenic = await FrequencyImageProcessor.process(scenicImage, neutralBands, 64, 'Scenic image')
 		const shaped = await FrequencyImageProcessor.process(image, shapedBands, 64, 'Demo image')
 		const windowedProfileDistance = this.calculateProfileDistance(neutral.summary.spectrogramProfile, scenic.summary.spectrogramProfile)
+		const processedProfileDistance = this.calculateProfileDistance(neutral.summary.spectrogramProfile, shaped.summary.spectrogramProfile)
 		assert(neutral.dataUrl.startsWith('data:image/png'), 'Expected neutral processing to return a PNG data URL')
 		assert(shaped.dataUrl.startsWith('data:image/png'), 'Expected shaped processing to return a PNG data URL')
 		assert(neutral.summary.workingWidth === 64 && neutral.summary.workingHeight === 64, 'Expected the FFT working size to be 64 by 64')
@@ -36,11 +37,13 @@ export class FrequencyImageProcessorTest {
 		assert(shaped.summary.spectrogramProfile.some((value) => value > 0.2), 'Expected the shaped FFT summary to include visible normalized spectral peaks')
 		assert(shaped.summary.spectrogramProfile.every((value) => value >= 0 && value <= 1), 'Expected the graph backdrop profile to stay auto-normalized between zero and one')
 		assert(windowedProfileDistance > 0.005, 'Expected very different demo images to produce more distinguishable visual FFT backdrops after edge windowing')
+		assert(processedProfileDistance > 0.005, 'Expected non-neutral band gains to change the published graph backdrop profile, not just the rendered image output')
 		assert(shaped.dataUrl !== neutral.dataUrl, 'Expected shaped processing to visibly differ from neutral processing')
 		return {
 			neutralSize: `${neutral.summary.workingWidth}x${neutral.summary.workingHeight}`,
 			shapedRange: shaped.summary.gainExtremesText,
 			windowedProfileDistance: windowedProfileDistance.toFixed(3),
+			processedProfileDistance: processedProfileDistance.toFixed(3),
 		}
 	}
 
