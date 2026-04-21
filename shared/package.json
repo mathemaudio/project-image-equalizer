@@ -8,7 +8,7 @@
 	"scripts": {
 		"typecheck": "tsc --noEmit --watch",
 		"dev": "tsc --watch",
-		"lll-check": "npm run build && lllts --project tsconfig.json --entry src/index.ts --verbose --noEmit",
+		"lll-check": "npm run build && pnpm exec lllts --project tsconfig.json --entry src/index.ts --verbose --noEmit",
 		"build": "node ../server/node_modules/typescript/bin/tsc -p tsconfig.json && node -e \"require('node:fs').writeFileSync('dist/package.json', '{\\\"type\\\":\\\"commonjs\\\"}\\n')\"",
 		"i": "pnpm i"
 	},
