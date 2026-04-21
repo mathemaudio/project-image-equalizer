@@ -1,15 +1,16 @@
 import './FrequencyImageProcessor.lll'
-import { AssertFn, Scenario, Spec } from '@shared/lll.lll'
+import { AssertFn, Scenario, ScenarioParameter, Spec } from '@shared/lll.lll'
 import { DemoImageFactory } from './DemoImageFactory.lll'
 import type { EqualizerBand } from './EqualizerBand.lll'
 import { FrequencyImageProcessor } from './FrequencyImageProcessor.lll'
 
 @Spec('Covers FFT-domain image shaping outputs and summaries for the equalizer processor.')
 export class FrequencyImageProcessorTest {
-	testType = "unit"
+	testType = 'unit'
 
 	@Scenario('processes an image in the FFT domain and changes the output when band gains change')
-	static async shapesImageSpectra(input = {}, assert: AssertFn): Promise<{ neutralSize: string, shapedRange: string }> {
+	static async shapesImageSpectra(scenario: ScenarioParameter): Promise<{ neutralSize: string, shapedRange: string }> {
+		const assert: AssertFn = scenario.assert
 		const demo = DemoImageFactory.createAbstractDataUrl(64)
 		const image = await this.loadImage(demo.dataUrl)
 		const neutralBands: EqualizerBand[] = [

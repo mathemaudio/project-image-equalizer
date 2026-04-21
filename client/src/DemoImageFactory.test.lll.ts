@@ -1,13 +1,14 @@
 import './DemoImageFactory.lll'
-import { AssertFn, Scenario, Spec } from '@shared/lll.lll'
+import { AssertFn, Scenario, ScenarioParameter, Spec } from '@shared/lll.lll'
 import { DemoImageFactory } from './DemoImageFactory.lll'
 
 @Spec('Covers generated demo image creation for the equalizer startup workflow.')
 export class DemoImageFactoryTest {
-	testType = "unit"
+	testType = 'unit'
 
 	@Scenario('creates a colorful demo image data URL that loads at the requested size')
-	static async createsDemoImage(input = {}, assert: AssertFn): Promise<{ prefix: string, width: number, height: number }> {
+	static async createsDemoImage(scenario: ScenarioParameter): Promise<{ prefix: string, width: number, height: number }> {
+		const assert: AssertFn = scenario.assert
 		const demo = DemoImageFactory.createAbstractDataUrl(64)
 		assert(demo.dataUrl.startsWith('data:image/png'), 'Expected a PNG data URL to be produced')
 		assert(demo.width === 64 && demo.height === 64, 'Expected requested demo dimensions to be preserved')
