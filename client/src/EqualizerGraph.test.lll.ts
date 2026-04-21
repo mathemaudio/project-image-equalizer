@@ -15,7 +15,7 @@ export class EqualizerGraphTest {
 		await this.prepareMountedGraph(graph, waitFor)
 		graph.bands = this.createBands()
 		graph.selectedBandId = 3
-		graph.spectrogramProfile = Array.from({ length: 24 }, (_, index) => (index % 5 === 0 ? 0.85 : 0.18 + (index / 40)))
+		graph.spectrogramProfile = [1, 0.6, 0.24, 0.08, 0.03, 0.01, 0.005, 0.002, 0.001]
 		await graph.updateComplete
 		await waitFor(() => this.readVisibleWidthHandleLabel(graph) === 'Band 3 width handles', 'Expected Band 3 width handles to be visible before interaction')
 		const beforeLabel = this.readVisibleWidthHandleLabel(graph)
@@ -27,10 +27,12 @@ export class EqualizerGraphTest {
 		await waitFor(() => this.readVisibleWidthHandleLabel(graph) === 'Band 2 width handles', 'Expected clicking the Band 2 handle to move width handles onto Band 2')
 		const afterLabel = this.readVisibleWidthHandleLabel(graph)
 		const backdrop = graph.shadowRoot?.querySelector<SVGPathElement>('path[aria-label="Live FFT spectrum backdrop"]')
+		const backdropPath = backdrop?.getAttribute('d') ?? ''
 
 		assert(beforeLabel === 'Band 3 width handles', 'Expected Band 3 to start selected for direct-width editing')
 		assert(afterLabel === 'Band 2 width handles', 'Expected the clicked Band 2 handle to become the visible selected band')
 		assert(backdrop !== null && backdrop !== undefined, 'Expected the graph to render a faint live FFT backdrop path behind the equalizer bands')
+		assert(backdropPath.includes('M ') && backdropPath.includes('L '), 'Expected the FFT backdrop to render a drawn path')
 		return { beforeLabel, afterLabel }
 	}
 

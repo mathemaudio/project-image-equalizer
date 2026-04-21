@@ -421,16 +421,23 @@ export class EqualizerGraph extends LitElement {
 			return `M ${this.graphPadding.left} ${baseY} L ${this.graphWidth - this.graphPadding.right} ${baseY} L ${this.graphWidth - this.graphPadding.right} ${baseY} Z`
 		}
 		const points: string[] = []
-		const maxHeight = this.plotHeight() * 0.34
 		for (let index = 0; index < this.spectrogramProfile.length; index += 1) {
 			const frequency = 0.01 * Math.pow(100, index / Math.max(1, this.spectrogramProfile.length - 1))
 			const x = this.frequencyToX(frequency)
 			const amplitude = this.clamp(this.spectrogramProfile[index] ?? 0, 0, 1)
-			const y = baseY - (amplitude * maxHeight)
+			const y = this.gainToY(this.mapSpectrumAmplitudeToBackdropGain(amplitude))
 			points.push(`${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`)
 		}
 		const endX = this.graphWidth - this.graphPadding.right
 		return `${points.join(' ')} L ${endX} ${baseY} L ${this.graphPadding.left} ${baseY} Z`
+	}
+
+	@Spec('Maps normalized spectrum energy into a logarithmic backdrop gain range so the visual FFT shape matches the EQ graph scaling more naturally.')
+	private mapSpectrumAmplitudeToBackdropGain(amplitude: number): number {
+		const safeAmplitude = Math.max(0.001, amplitude)
+		const decibels = 20 * Math.log10(safeAmplitude)
+		const normalizedLevel = this.clamp((decibels + 60) / 60, 0, 1)
+		return -18 + (normalizedLevel * 12)
 	}
 
 	@Spec('Maps a normalized frequency value onto the graph x axis with logarithmic spacing.')

@@ -43,12 +43,16 @@ export class FrequencyImageProcessor {
 			luminance[pixelIndex] = (0.299 * r) + (0.587 * g) + (0.114 * b)
 		}
 
+		const windowedLuminance = this.createWindowedLuminance(luminance, size)
+		const spectrogramReal = windowedLuminance.slice()
+		const spectrogramImaginary = new Float64Array(pixelCount)
+		this.perform2dFft(spectrogramReal, spectrogramImaginary, size, false)
+		const spectrogramProfile = this.createSpectrogramProfile(spectrogramReal, spectrogramImaginary, size)
+
 		const real = luminance.slice()
 		const imaginary = new Float64Array(pixelCount)
 		this.perform2dFft(real, imaginary, size, false)
-
 		const averageOriginalEnergy = this.calculateAverageMagnitude(real, imaginary)
-		const spectrogramProfile = this.createSpectrogramProfile(real, imaginary, size)
 		const gainExtremes = { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY }
 		for (let y = 0; y < size; y += 1) {
 			const fy = y <= size / 2 ? y : y - size
@@ -125,6 +129,20 @@ export class FrequencyImageProcessor {
 		return powerOfTwo
 	}
 
+	@Spec('Creates a tapered copy of the luminance image so the visual-only spectrum preview is less dominated by hard image edges.')
+	private static createWindowedLuminance(luminance: Float64Array, size: number): Float64Array {
+		const windowed = new Float64Array(luminance.length)
+		for (let y = 0; y < size; y += 1) {
+			const rowWeight = this.calculateHannWeight(y, size)
+			for (let x = 0; x < size; x += 1) {
+				const columnWeight = this.calculateHannWeight(x, size)
+				const index = (y * size) + x
+				windowed[index] = luminance[index] * rowWeight * columnWeight
+			}
+		}
+		return windowed
+	}
+
 	@Spec('Calculates the combined linear magnitude gain for a normalized radial image frequency.')
 	private static calculateCombinedGain(radius: number, bands: EqualizerBand[]): number {
 		const safeRadius = Math.max(1e-4, Math.min(1, radius))
@@ -169,6 +187,14 @@ export class FrequencyImageProcessor {
 			return profile
 		}
 		return profile.map((value) => value / maxValue)
+	}
+
+	@Spec('Returns one Hann window weight so the visual-only FFT preview fades smoothly at image borders.')
+	private static calculateHannWeight(index: number, size: number): number {
+		if (size <= 1) {
+			return 1
+		}
+		return 0.5 * (1 - Math.cos((2 * Math.PI * index) / (size - 1)))
 	}
 
 	@Spec('Computes average spectral magnitude for visible processing diagnostics.')
