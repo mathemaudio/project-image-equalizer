@@ -1,25 +1,25 @@
 {
-  "name": "lll-client",
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "typecheck": "tsc --noEmit --watch",
-    "dev": "node scripts/dev-with-emit.mjs",
-    "dev:vite": "vite",
-    "dev:emit": "tsc -w --preserveWatchOutput",
-    "lll-server": "pnpm exec lllts --server start --port 26883 --projectPath . --projectClientLink http://localhost:26881",
-    "lll-check": "pnpm exec lllts --project tsconfig.json --entry src/Start.lll.ts --clientTunnel http://localhost:26883",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "lit": "^3.2.1",
-    "zod": "^4.3.5"
-  },
-  "devDependencies": {
-    "@types/node": "^22.10.1",
-    "typescript": "^5.6.3",
-    "vite": "^5.4.10",
-    "lllts": "file:../.lll/vendor/lllts"
-  }
+	"name": "lll-client",
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"typecheck": "tsc --noEmit --watch",
+		"dev": "node scripts/dev-with-emit.mjs",
+		"dev:vite": "vite",
+		"dev:emit": "tsc -w --preserveWatchOutput",
+		"lll-server": "pnpm exec lllts --server start --port 26883 --projectPath . --projectClientLink http://localhost:26881",
+		"lll-check": "npm run build && pnpm exec lllts --project tsconfig.json --entry src/Start.lll.ts --clientTunnel http://localhost:26883",
+		"build": "tsc && vite build",
+		"preview": "vite preview"
+	},
+	"dependencies": {
+		"lit": "^3.2.1",
+		"zod": "^4.3.5"
+	},
+	"devDependencies": {
+		"@types/node": "^22.10.1",
+		"typescript": "^5.6.3",
+		"vite": "^5.4.10",
+		"lllts": "file:../.lll/vendor/lllts"
+	}
 }
