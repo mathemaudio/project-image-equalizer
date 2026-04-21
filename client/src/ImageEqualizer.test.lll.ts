@@ -29,6 +29,8 @@ export class ImageEqualizerTest {
 		const afterSnapshot = this.readText(equalizer, '#band-snapshot')
 		const processedPreview = equalizer.shadowRoot?.querySelector<HTMLImageElement>('img.preview.processed')
 		const originalPreview = equalizer.shadowRoot?.querySelector<HTMLImageElement>('img.preview.original')
+		const graphElement = equalizer.shadowRoot?.querySelector<HTMLElement>('equalizer-graph')
+		const graphBackdrop = graphElement?.shadowRoot?.querySelector<SVGPathElement>('path[aria-label="Live FFT spectrum backdrop"]')
 
 		assert(sourceLabel === 'Scenic image', 'Expected the built-in scenic demo to load automatically on first render')
 		assert(processingState === 'Processed', 'Expected the equalizer to finish processing the scenic demo image')
@@ -39,6 +41,7 @@ export class ImageEqualizerTest {
 		assert(afterSnapshot.includes('Band 3:') && afterSnapshot.includes('Q 1.2'), 'Expected the processed summary text to update after the width slider changes')
 		assert(originalPreview !== null && originalPreview !== undefined, 'Expected the original scenic preview image to be visible')
 		assert(processedPreview !== null && processedPreview !== undefined, 'Expected the processed scenic preview image to be visible')
+		assert(graphBackdrop !== null && graphBackdrop !== undefined, 'Expected the frequency graph to show the faint live FFT backdrop after processing the demo image')
 		return { sourceLabel, processingState, fftSize, beforeReadout, afterReadout }
 	}
 

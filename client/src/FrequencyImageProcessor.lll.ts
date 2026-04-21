@@ -48,6 +48,7 @@ export class FrequencyImageProcessor {
 		this.perform2dFft(real, imaginary, size, false)
 
 		const averageOriginalEnergy = this.calculateAverageMagnitude(real, imaginary)
+		const spectrogramProfile = this.createSpectrogramProfile(real, imaginary, size)
 		const gainExtremes = { min: Number.POSITIVE_INFINITY, max: Number.NEGATIVE_INFINITY }
 		for (let y = 0; y < size; y += 1) {
 			const fy = y <= size / 2 ? y : y - size
@@ -109,6 +110,7 @@ export class FrequencyImageProcessor {
 				bandSnapshotText: bands
 					.map((band) => `${band.label}: ${Math.round(band.center * 100)}% / ${band.gain > 0 ? '+' : ''}${band.gain.toFixed(1)} dB / Q ${band.q.toFixed(1)}`)
 					.join(' · '),
+				spectrogramProfile,
 			},
 		}
 	}
@@ -135,6 +137,38 @@ export class FrequencyImageProcessor {
 			totalDecibels += band.gain * influence
 		}
 		return Math.pow(10, totalDecibels / 20)
+	}
+
+	@Spec('Builds a normalized radial spectrum profile so the equalizer graph can faintly visualize live FFT energy behind the bands.')
+	private static createSpectrogramProfile(real: Float64Array, imaginary: Float64Array, size: number): number[] {
+		const bucketCount = 96
+		const totals = new Float64Array(bucketCount)
+		const counts = new Uint32Array(bucketCount)
+		for (let y = 0; y < size; y += 1) {
+			const fy = y <= size / 2 ? y : y - size
+			for (let x = 0; x < size; x += 1) {
+				const fx = x <= size / 2 ? x : x - size
+				const radius = Math.sqrt((fx * fx) + (fy * fy)) / (Math.sqrt(2) * (size / 2))
+				if (radius < 0.01 || radius > 1) {
+					continue
+				}
+				const bucket = Math.min(bucketCount - 1, Math.floor(((Math.log10(radius) + 2) / 2) * bucketCount))
+				const index = (y * size) + x
+				const magnitude = Math.sqrt((real[index] * real[index]) + (imaginary[index] * imaginary[index]))
+				totals[bucket] += Math.log10(1 + magnitude)
+				counts[bucket] += 1
+			}
+		}
+		let maxValue = 0
+		const profile = Array.from({ length: bucketCount }, (_, bucket) => {
+			const value = counts[bucket] === 0 ? 0 : totals[bucket] / counts[bucket]
+			maxValue = Math.max(maxValue, value)
+			return value
+		})
+		if (maxValue <= 0) {
+			return profile
+		}
+		return profile.map((value) => value / maxValue)
 	}
 
 	@Spec('Computes average spectral magnitude for visible processing diagnostics.')

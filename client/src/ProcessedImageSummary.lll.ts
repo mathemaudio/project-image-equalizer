@@ -5,4 +5,5 @@ export type ProcessedImageSummary = {
 	energyDeltaPercent: number
 	gainExtremesText: string
 	bandSnapshotText: string
+	spectrogramProfile: number[]
 }

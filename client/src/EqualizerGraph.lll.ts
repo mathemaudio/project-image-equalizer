@@ -56,6 +56,9 @@ export class EqualizerGraph extends LitElement {
 	@property({ type: Number })
 	selectedBandId: number = 0
 
+	@property({ attribute: false })
+	spectrogramProfile: number[] = []
+
 	@state()
 	private dragBandId: number | null = null
 
@@ -69,6 +72,7 @@ export class EqualizerGraph extends LitElement {
 	@Spec('Renders the frequency graph, band curves, draggable control points, and selected-band width brackets.')
 	render(): TemplateResult {
 		const totalGainPath = this.createCombinedPath()
+		const spectrogramPath = this.createSpectrogramPath()
 		const gainTicks = [-18, -12, -6, 0, 6, 12, 18]
 		const frequencyTicks = [0.02, 0.05, 0.1, 0.2, 0.4, 0.7, 1]
 		return html`
@@ -86,10 +90,15 @@ export class EqualizerGraph extends LitElement {
 							<stop offset="0%" stop-color="#7de6ff"></stop>
 							<stop offset="100%" stop-color="#ffd16d"></stop>
 						</linearGradient>
+						<linearGradient id="spectrogram-fill" x1="0" x2="0" y1="0" y2="1">
+							<stop offset="0%" stop-color="rgba(236,240,248,0.18)"></stop>
+							<stop offset="100%" stop-color="rgba(236,240,248,0.02)"></stop>
+						</linearGradient>
 					</defs>
 					<rect x="0" y="0" width="${this.graphWidth}" height="${this.graphHeight}" fill="transparent"></rect>
 					${gainTicks.map((gain) => this.renderGainGridLine(gain))}
 					${frequencyTicks.map((frequency) => this.renderFrequencyGridLine(frequency))}
+					<path d="${spectrogramPath}" fill="url(#spectrogram-fill)" stroke="rgba(236,240,248,0.32)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.3" aria-label="Live FFT spectrum backdrop"></path>
 					<path d="${totalGainPath}" fill="none" stroke="url(#sum-line)" stroke-width="4" stroke-linecap="round"></path>
 					${this.bands.map((band) => this.renderBandCurve(band))}
 					${this.bands.map((band) => this.renderBandWidthHandles(band))}
@@ -403,6 +412,25 @@ export class EqualizerGraph extends LitElement {
 			points.push(`${step === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`)
 		}
 		return points.join(' ')
+	}
+
+	@Spec('Builds a thin normalized live FFT backdrop path that stays behind the equalizer bands.')
+	private createSpectrogramPath(): string {
+		const baseY = this.graphHeight - this.graphPadding.bottom
+		if (this.spectrogramProfile.length === 0) {
+			return `M ${this.graphPadding.left} ${baseY} L ${this.graphWidth - this.graphPadding.right} ${baseY} L ${this.graphWidth - this.graphPadding.right} ${baseY} Z`
+		}
+		const points: string[] = []
+		const maxHeight = this.plotHeight() * 0.34
+		for (let index = 0; index < this.spectrogramProfile.length; index += 1) {
+			const frequency = 0.01 * Math.pow(100, index / Math.max(1, this.spectrogramProfile.length - 1))
+			const x = this.frequencyToX(frequency)
+			const amplitude = this.clamp(this.spectrogramProfile[index] ?? 0, 0, 1)
+			const y = baseY - (amplitude * maxHeight)
+			points.push(`${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`)
+		}
+		const endX = this.graphWidth - this.graphPadding.right
+		return `${points.join(' ')} L ${endX} ${baseY} L ${this.graphPadding.left} ${baseY} Z`
 	}
 
 	@Spec('Maps a normalized frequency value onto the graph x axis with logarithmic spacing.')

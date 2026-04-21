@@ -370,6 +370,7 @@ export class ImageEqualizer extends LitElement {
 					<equalizer-graph
 						.bands=${this.bands}
 						.selectedBandId=${this.selectedBandId}
+						.spectrogramProfile=${this.processedSummary?.spectrogramProfile ?? []}
 						@band-select=${this.onBandSelected}
 						@band-change=${this.onBandDragged}
 						@band-q-change=${this.onBandQEventChanged}

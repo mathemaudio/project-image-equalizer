@@ -26,8 +26,11 @@ export class FrequencyImageProcessorTest {
 		assert(neutral.dataUrl.startsWith('data:image/png'), 'Expected neutral processing to return a PNG data URL')
 		assert(shaped.dataUrl.startsWith('data:image/png'), 'Expected shaped processing to return a PNG data URL')
 		assert(neutral.summary.workingWidth === 64 && neutral.summary.workingHeight === 64, 'Expected the FFT working size to be 64 by 64')
+		assert(neutral.summary.spectrogramProfile.length === 96, 'Expected neutral processing to publish a dense 96-sample FFT profile for the graph backdrop')
 		assert(shaped.summary.gainExtremesText !== '1.00× to 1.00×', 'Expected non-neutral bands to create a non-flat gain range')
 		assert(shaped.summary.bandSnapshotText.includes('Band 2'), 'Expected the band summary text to include the second shaped band')
+		assert(shaped.summary.spectrogramProfile.some((value) => value > 0.2), 'Expected the shaped FFT summary to include visible normalized spectral peaks')
+		assert(shaped.summary.spectrogramProfile.every((value) => value >= 0 && value <= 1), 'Expected the graph backdrop profile to stay auto-normalized between zero and one')
 		assert(shaped.dataUrl !== neutral.dataUrl, 'Expected shaped processing to visibly differ from neutral processing')
 		return {
 			neutralSize: `${neutral.summary.workingWidth}x${neutral.summary.workingHeight}`,
