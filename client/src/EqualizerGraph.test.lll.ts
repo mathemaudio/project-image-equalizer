@@ -1,5 +1,5 @@
 import './EqualizerGraph.lll'
-import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from '@shared/lll.lll'
+import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from './lll.lll'
 import type { EqualizerBand } from './EqualizerBand.lll'
 import { EqualizerGraph } from './EqualizerGraph.lll'
 

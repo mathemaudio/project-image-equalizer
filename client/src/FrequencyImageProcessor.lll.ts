@@ -1,4 +1,4 @@
-import { Spec } from '@shared/lll.lll'
+import { Spec } from './lll.lll'
 import type { EqualizerBand } from './EqualizerBand.lll'
 import type { ProcessedImageSummary } from './ProcessedImageSummary.lll'
 
@@ -71,12 +71,13 @@ export class FrequencyImageProcessor {
 
 		const spectrogramProfile = this.createSpectrogramProfile(spectrogramReal, spectrogramImaginary, size)
 		this.perform2dFft(real, imaginary, size, true)
-		const averageProcessedEnergy = this.calculateAverageMagnitude(real, imaginary)
+		const normalizedLuminance = this.createDisplayLuminance(real, luminance)
+		const averageProcessedEnergy = this.calculateAverageLuminance(normalizedLuminance)
 		const outputImage = new ImageData(size, size)
 
 		for (let pixelIndex = 0; pixelIndex < pixelCount; pixelIndex += 1) {
 			const originalLuma = Math.max(1, luminance[pixelIndex])
-			const processedLuma = this.clamp(real[pixelIndex], 0, 255)
+			const processedLuma = normalizedLuminance[pixelIndex]
 			const ratio = processedLuma / originalLuma
 			const offset = pixelIndex * 4
 			outputImage.data[offset] = this.clamp(red[pixelIndex] * ratio, 0, 255)
@@ -161,34 +162,115 @@ export class FrequencyImageProcessor {
 
 	@Spec('Builds a normalized radial spectrum profile from the current shaped FFT magnitudes so the equalizer graph visualizes the live processed spectrum behind the bands.')
 	private static createSpectrogramProfile(real: Float64Array, imaginary: Float64Array, size: number): number[] {
-		const bucketCount = 96
+		const bucketCount = 128
+		const minimumRadius = 1 / Math.max(8, size)
 		const totals = new Float64Array(bucketCount)
-		const counts = new Uint32Array(bucketCount)
+		const weights = new Float64Array(bucketCount)
 		for (let y = 0; y < size; y += 1) {
 			const fy = y <= size / 2 ? y : y - size
 			for (let x = 0; x < size; x += 1) {
 				const fx = x <= size / 2 ? x : x - size
 				const radius = Math.sqrt((fx * fx) + (fy * fy)) / (Math.sqrt(2) * (size / 2))
-				if (radius < 0.01 || radius > 1) {
+				if (radius <= 0 || radius > 1) {
 					continue
 				}
-				const bucket = Math.min(bucketCount - 1, Math.floor(((Math.log10(radius) + 2) / 2) * bucketCount))
+				const normalizedPosition = this.radiusToProfilePosition(radius, minimumRadius)
+				const leftBucket = Math.floor(normalizedPosition)
+				const rightBucket = Math.min(bucketCount - 1, leftBucket + 1)
+				const rightWeight = normalizedPosition - leftBucket
+				const leftWeight = 1 - rightWeight
 				const index = (y * size) + x
 				const magnitude = Math.sqrt((real[index] * real[index]) + (imaginary[index] * imaginary[index]))
-				totals[bucket] += Math.log10(1 + magnitude)
-				counts[bucket] += 1
+				const energy = Math.log10(1 + magnitude)
+				totals[leftBucket] += energy * leftWeight
+				weights[leftBucket] += leftWeight
+				if (rightBucket !== leftBucket) {
+					totals[rightBucket] += energy * rightWeight
+					weights[rightBucket] += rightWeight
+				}
 			}
 		}
-		let maxValue = 0
-		const profile = Array.from({ length: bucketCount }, (_, bucket) => {
-			const value = counts[bucket] === 0 ? 0 : totals[bucket] / counts[bucket]
-			maxValue = Math.max(maxValue, value)
-			return value
-		})
-		if (maxValue <= 0) {
-			return profile
+		const filledProfile = this.fillMissingSpectrumBuckets(totals, weights)
+		const smoothedProfile = this.smoothSpectrumProfile(filledProfile, 2)
+		const detrendedProfile = this.subtractSpectrumTrend(smoothedProfile, 8)
+		return this.normalizeSpectrumProfile(smoothedProfile, detrendedProfile)
+	}
+
+	@Spec('Maps a normalized FFT radius into a fractional log-spaced spectrum profile bucket position.')
+	private static radiusToProfilePosition(radius: number, minimumRadius: number): number {
+		const safeRadius = Math.max(minimumRadius, Math.min(1, radius))
+		const minimumLog = Math.log10(minimumRadius)
+		const position = (Math.log10(safeRadius) - minimumLog) / -minimumLog
+		return this.clamp(position * 127, 0, 127)
+	}
+
+	@Spec('Interpolates across unpopulated low-frequency profile buckets so the backdrop curve stays continuous across all images.')
+	private static fillMissingSpectrumBuckets(totals: Float64Array, weights: Float64Array): number[] {
+		const values = Array.from({ length: totals.length }, (_, index) => weights[index] > 0 ? totals[index] / weights[index] : Number.NaN)
+		let lastKnownIndex = -1
+		for (let index = 0; index < values.length; index += 1) {
+			if (!Number.isNaN(values[index])) {
+				if (lastKnownIndex < 0) {
+					for (let fillIndex = 0; fillIndex < index; fillIndex += 1) {
+						values[fillIndex] = values[index]
+					}
+				} else if (index - lastKnownIndex > 1) {
+					const left = values[lastKnownIndex]
+					const right = values[index]
+					for (let fillIndex = lastKnownIndex + 1; fillIndex < index; fillIndex += 1) {
+						const mix = (fillIndex - lastKnownIndex) / (index - lastKnownIndex)
+						values[fillIndex] = left + ((right - left) * mix)
+					}
+				}
+				lastKnownIndex = index
+			}
 		}
-		return profile.map((value) => value / maxValue)
+		if (lastKnownIndex >= 0) {
+			for (let index = lastKnownIndex + 1; index < values.length; index += 1) {
+				values[index] = values[lastKnownIndex]
+			}
+		}
+		return values.map((value) => Number.isNaN(value) ? 0 : value)
+	}
+
+	@Spec('Smooths the radial spectrum profile with a compact triangular kernel so image-specific peaks remain visible while bucket quantization fades away.')
+	private static smoothSpectrumProfile(profile: number[], radius: number): number[] {
+		if (profile.length === 0 || radius <= 0) {
+			return profile.slice()
+		}
+		return profile.map((_, index) => {
+			let weightedTotal = 0
+			let totalWeight = 0
+			for (let offset = -radius; offset <= radius; offset += 1) {
+				const sampleIndex = this.clamp(index + offset, 0, profile.length - 1)
+				const weight = radius + 1 - Math.abs(offset)
+				weightedTotal += profile[sampleIndex] * weight
+				totalWeight += weight
+			}
+			return totalWeight === 0 ? profile[index] : weightedTotal / totalWeight
+		})
+	}
+
+	@Spec('Subtracts a broad local trend from the smoothed spectrum profile so different images produce more distinguishable backdrop shapes than a generic one-over-falloff curve.')
+	private static subtractSpectrumTrend(profile: number[], radius: number): number[] {
+		const trend = this.smoothSpectrumProfile(profile, radius)
+		return profile.map((value, index) => value - trend[index])
+	}
+
+	@Spec('Combines absolute spectrum level with detrended local contrast so the graph stays stable across edits while remaining image-dependent.')
+	private static normalizeSpectrumProfile(absoluteProfile: number[], detrendedProfile: number[]): number[] {
+		if (absoluteProfile.length === 0) {
+			return []
+		}
+		const absoluteMaximum = absoluteProfile.reduce((maximum, value) => Math.max(maximum, value), 0)
+		const detrendedMinimum = detrendedProfile.reduce((minimum, value) => Math.min(minimum, value), Number.POSITIVE_INFINITY)
+		const detrendedMaximum = detrendedProfile.reduce((maximum, value) => Math.max(maximum, value), Number.NEGATIVE_INFINITY)
+		const detrendedRange = Math.max(1e-6, detrendedMaximum - detrendedMinimum)
+		return absoluteProfile.map((value, index) => {
+			const absoluteComponent = absoluteMaximum <= 0 ? 0 : value / absoluteMaximum
+			const contrastComponent = (detrendedProfile[index] - detrendedMinimum) / detrendedRange
+			return this.clamp((absoluteComponent * 0.35) + (contrastComponent * 0.65), 0, 1)
+		})
 	}
 
 	@Spec('Returns one Hann window weight so the visual-only FFT preview fades smoothly at image borders.')
@@ -199,6 +281,26 @@ export class FrequencyImageProcessor {
 		return 0.5 * (1 - Math.cos((2 * Math.PI * index) / (size - 1)))
 	}
 
+	@Spec('Re-maps reconstructed luminance with a soft-knee normalization so strong FFT boosts do not collapse into hard black-and-white clipping.')
+	private static createDisplayLuminance(reconstructed: Float64Array, sourceLuminance: Float64Array): Float64Array {
+		const sourceAverage = this.calculateAverageLuminance(sourceLuminance)
+		let minimum = Number.POSITIVE_INFINITY
+		let maximum = Number.NEGATIVE_INFINITY
+		for (let index = 0; index < reconstructed.length; index += 1) {
+			minimum = Math.min(minimum, reconstructed[index])
+			maximum = Math.max(maximum, reconstructed[index])
+		}
+		const center = (minimum + maximum) / 2
+		const halfRange = Math.max(1, (maximum - minimum) / 2)
+		const normalized = new Float64Array(reconstructed.length)
+		for (let index = 0; index < reconstructed.length; index += 1) {
+			const centered = (reconstructed[index] - center) / halfRange
+			const softened = Math.tanh(centered * 1.35)
+			normalized[index] = this.clamp(sourceAverage + (softened * 110), 0, 255)
+		}
+		return normalized
+	}
+
 	@Spec('Computes average spectral magnitude for visible processing diagnostics.')
 	private static calculateAverageMagnitude(real: Float64Array, imaginary: Float64Array): number {
 		let total = 0
@@ -206,6 +308,15 @@ export class FrequencyImageProcessor {
 			total += Math.sqrt((real[index] * real[index]) + (imaginary[index] * imaginary[index]))
 		}
 		return total / Math.max(1, real.length)
+	}
+
+	@Spec('Computes average luminance for soft reconstruction normalization diagnostics.')
+	private static calculateAverageLuminance(values: Float64Array): number {
+		let total = 0
+		for (let index = 0; index < values.length; index += 1) {
+			total += values[index]
+		}
+		return total / Math.max(1, values.length)
 	}
 
 	@Spec('Runs a separable 2D FFT or inverse FFT over square image data.')

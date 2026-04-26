@@ -1,6 +1,6 @@
 import { LitElement, css, html, svg, type TemplateResult } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { Spec } from '@shared/lll.lll'
+import { Spec } from './lll.lll'
 import type { EqualizerBand } from './EqualizerBand.lll'
 
 @Spec('Renders the shared overlapping band graph and supports direct drag editing of center frequency, gain, and selected-band width.')

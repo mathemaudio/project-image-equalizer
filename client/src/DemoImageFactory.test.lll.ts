@@ -1,5 +1,5 @@
 import './DemoImageFactory.lll'
-import { AssertFn, Scenario, ScenarioParameter, Spec } from '@shared/lll.lll'
+import { AssertFn, Scenario, ScenarioParameter, Spec } from './lll.lll'
 import { DemoImageFactory } from './DemoImageFactory.lll'
 
 @Spec('Covers generated demo image creation for the equalizer startup workflow.')

@@ -1,5 +1,5 @@
 import './Start.lll'
-import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from '@shared/lll.lll'
+import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from './lll.lll'
 import { Start } from './Start.lll'
 
 @Spec('Covers client bootstrapping behavior through visible DOM output.')
@@ -11,7 +11,7 @@ export class StartTest {
 		const assert: AssertFn = scenario.assert
 		const waitFor: WaitForFn = scenario.waitFor
 		const originalHTMLElement = (globalThis as Record<string, unknown>)['HTMLElement']
-		;(globalThis as Record<string, unknown>)['HTMLElement'] = this.createBehavioralHTMLElementConstructor()
+			; (globalThis as Record<string, unknown>)['HTMLElement'] = this.createBehavioralHTMLElementConstructor()
 		try {
 			const root = document.querySelector<HTMLElement>('#app')
 			assert(root !== null, 'Expected the #app container to exist for client bootstrapping')

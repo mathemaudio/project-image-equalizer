@@ -1,5 +1,5 @@
 import { html, render } from 'lit'
-import { Spec } from '@shared/lll.lll'
+import { Spec } from './lll.lll'
 import './App.lll'
 
 @Spec('Bootstraps the client app by rendering app-root into the app container')

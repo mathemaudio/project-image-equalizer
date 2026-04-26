@@ -1,6 +1,6 @@
 import { LitElement, css, html, type TemplateResult } from 'lit'
 import { customElement } from 'lit/decorators.js'
-import { Spec } from '@shared/lll.lll'
+import { Spec } from './lll.lll'
 import './ImageEqualizer.lll'
 
 @Spec('Composes the application shell for the browser-only interactive frequency-domain image equalizer.')

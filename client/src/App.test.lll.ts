@@ -1,5 +1,5 @@
 import './App.lll'
-import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from '@shared/lll.lll'
+import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from './lll.lll'
 import { App } from './App.lll'
 
 @Spec('Exercises the app shell through visible browser UI only.')

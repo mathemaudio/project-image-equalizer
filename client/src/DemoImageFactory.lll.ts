@@ -1,4 +1,4 @@
-import { Spec } from '@shared/lll.lll'
+import { Spec } from './lll.lll'
 
 @Spec('Builds procedural in-browser demo images so the equalizer can be explored without uploading a file first.')
 export class DemoImageFactory {

@@ -1,6 +1,6 @@
 import { LitElement, css, html, type TemplateResult } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import { Spec } from '@shared/lll.lll'
+import { Spec } from './lll.lll'
 
 @Spec('Renders a two-operand calculator with classic memory controls.')
 @customElement('calculator-panel')

@@ -1,5 +1,5 @@
 import './ImageEqualizer.lll'
-import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from '@shared/lll.lll'
+import { AssertFn, Scenario, ScenarioParameter, Spec, SubjectFactory, WaitForFn } from './lll.lll'
 import { ImageEqualizer } from './ImageEqualizer.lll'
 
 @Spec('Exercises the image equalizer only through visible controls and rendered output.')
