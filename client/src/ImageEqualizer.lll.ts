@@ -439,7 +439,7 @@ export class ImageEqualizer extends LitElement {
 
 	@Spec('Loads the bundled Mona image asset into the equalizer workflow.')
 	private async loadMonaImage() {
-		await this.loadImageSource('/images/mona.webp', 'Mona image')
+		await this.loadImageSource('./images/mona.webp', 'Mona image')
 	}
 
 	@Spec('Reads the chosen local image file and loads it for in-browser processing.')
