@@ -6,14 +6,13 @@ You load an image, then shape it with draggable EQ-style bands. The interface fe
 
 Instead, the image is transformed into the **frequency domain with an FFT** under the hood. The EQ controls are used to build a frequency-shaping curve there, and the image is reconstructed afterward.
 
-![Scanline Synth](client/public/images/image-equalizer.png)
+![Image Equalize](client/public/images/image-equalizer.png)
 
 It reads the horizontal rows of an image as single-cycle waveforms, lets you play those waveforms from your computer keyboard, a connected MIDI controller, or the on-screen piano, and shapes the result with multiple playback modes and live controls.
 
 ## Try it
 
 [project-image-equalizer](https://mathemaudio.github.io/project-image-equalizer/)
-
 
 ## Why do it this way?
 
