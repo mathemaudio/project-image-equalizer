@@ -6,8 +6,8 @@ import { App } from './App.lll'
 export class AppTest {
 	testType = 'behavioral'
 
-	@Scenario('renders the headline, explainer copy, and equalizer host')
-	static async rendersAppShell(subjectFactory: SubjectFactory<App>, scenario: ScenarioParameter): Promise<{ heading: string, lead: string, childTag: string }> {
+	@Scenario('renders the headline, explainer copy, LLL corner link, and equalizer host')
+	static async rendersAppShell(subjectFactory: SubjectFactory<App>, scenario: ScenarioParameter): Promise<{ heading: string, lead: string, childTag: string, cornerText: string, cornerHref: string }> {
 		const assert: AssertFn = scenario.assert
 		const waitFor: WaitForFn = scenario.waitFor
 		const app = await subjectFactory()
@@ -17,10 +17,15 @@ export class AppTest {
 		const heading = this.readText(app, 'h1')
 		const lead = this.readText(app, 'p.lead')
 		const equalizer = app.shadowRoot?.querySelector('image-equalizer')
+		const cornerLink = app.shadowRoot?.querySelector<HTMLAnchorElement>('a.lll-corner-link')
+		const cornerText = this.readText(app, '.lll-corner-link-text')
 		assert(equalizer !== null && equalizer !== undefined, 'Expected image-equalizer to be visible inside the app shell')
+		assert(cornerLink !== null && cornerLink !== undefined, 'Expected the app shell to render the copied LLL corner link')
 		assert(heading === 'Interactive Frequency-Domain Image Equalizer', 'Expected the app headline to describe the equalizer experience')
 		assert(lead.includes('Upload any image') && lead.includes('processed version respond live below the original'), 'Expected the lead copy to explain upload and live-processing behavior')
-		return { heading, lead, childTag: equalizer.tagName.toLowerCase() }
+		assert(cornerText === 'made with LLL', 'Expected the corner badge text to match the reference project wording')
+		assert(cornerLink.href === 'https://lllts.dev/', 'Expected the corner badge to link to the LLL website')
+		return { heading, lead, childTag: equalizer.tagName.toLowerCase(), cornerText, cornerHref: cornerLink.href }
 	}
 
 	@Spec('Waits for the app host shadow DOM to render.')
