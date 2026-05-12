@@ -7,8 +7,8 @@
 		"dev": "node scripts/dev-with-emit.mjs",
 		"dev:vite": "vite",
 		"dev:emit": "tsc -w --preserveWatchOutput",
-		"lll-server": "pnpm exec evidyts --server start --port 26883 --projectPath . --projectClientLink http://localhost:26881",
-		"lll-check": "npm run build && pnpm exec evidyts --project tsconfig.json --entry src/Start.lll.ts --clientTunnel http://localhost:26883",
+		"lll-server": "pnpm exec evidyts --server start --port 58973 --projectPath . --projectClientLink http://localhost:58971",
+		"lll-check": "tsc --preserveWatchOutput  && pnpm exec lllts --project tsconfig.json --entry src/Start.lll.ts --clientTunnel http://localhost:58973",
 		"build": "tsc && vite build",
 		"preview": "vite preview"
 	},

@@ -298,12 +298,22 @@ export class ImageEqualizer extends LitElement {
 		return html`
 			<main>
 				<section class="panel preview-panel">
+					<figure>
+						<div class="figure-title">
+							<h2>Processed image</h2>
+							<span class="subtle">FFT-shaped output</span>
+						</div>
+						${this.processedImageUrl === null
+				? html`<div class="empty">The processed preview appears here once an image is ready.</div>`
+				: html`<img class="preview processed" alt="Processed equalized image preview" src="${this.processedImageUrl}" />`}
+					</figure>
+
 					<div class="layout-header">
 						<div>
 							<div class="section-heading">
 								<div>
-									<h2>Image previews</h2>
-									<p class="subtle">Original up top, processed below, all in your browser.</p>
+									<h3>Image previews</h3>
+									<p class="subtle">Processed first, with the original and controls below for small screens.</p>
 								</div>
 							</div>
 							<div class="status-grid">
@@ -333,7 +343,6 @@ export class ImageEqualizer extends LitElement {
 						</div>
 					</div>
 
-
 					<div class="preview-stack">
 						<figure>
 							<div class="figure-title">
@@ -343,15 +352,6 @@ export class ImageEqualizer extends LitElement {
 							${this.originalImageUrl === null
 				? html`<div class="empty">Upload an image or load the demo to see the original preview here.</div>`
 				: html`<img class="preview original" alt="Original uploaded image preview" src="${this.originalImageUrl}" />`}
-						</figure>
-						<figure>
-							<div class="figure-title">
-								<h3>Processed image</h3>
-								<span class="subtle">FFT-shaped output</span>
-							</div>
-							${this.processedImageUrl === null
-				? html`<div class="empty">The processed preview appears here once an image is ready.</div>`
-				: html`<img class="preview processed" alt="Processed equalized image preview" src="${this.processedImageUrl}" />`}
 						</figure>
 					</div>
 				</section>

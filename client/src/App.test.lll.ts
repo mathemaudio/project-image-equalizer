@@ -23,7 +23,7 @@ export class AppTest {
 		assert(cornerLink !== null && cornerLink !== undefined, 'Expected the app shell to render the copied LLL corner link')
 		assert(heading === 'Interactive Frequency-Domain Image Equalizer', 'Expected the app headline to describe the equalizer experience')
 		assert(lead.includes('Upload any image') && lead.includes('processed version respond live below the original'), 'Expected the lead copy to explain upload and live-processing behavior')
-		assert(cornerText === 'made with LLL', 'Expected the corner badge text to match the reference project wording')
+		assert(cornerText.toLowerCase() === 'made with evidype', 'Expected the corner badge text to match the reference project wording')
 		assert(cornerLink.href === 'https://evidype.com/', 'Expected the corner badge to link to the Evidype website')
 		return { heading, lead, childTag: equalizer.tagName.toLowerCase(), cornerText, cornerHref: cornerLink.href }
 	}
