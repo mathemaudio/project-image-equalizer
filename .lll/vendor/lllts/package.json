@@ -1,33 +1,26 @@
 {
   "name": "lllts",
-  "version": "0.1.35",
-  "description": "LLLTS: A self-testing, LLM-friendly language built on TypeScript",
-  "main": "dist/LLLTS.lll.js",
+  "version": "0.1.37",
+  "description": "EvidyTS: the stricter TypeScript compiler/dialect behind Evidype",
+  "license": "GPL-3.0-or-later",
+  "main": "dist/LLLTS.bundle.cjs",
   "bin": {
+    "evidyts": "./bin/evidyts",
     "lllts": "./bin/lllts"
   },
   "type": "commonjs",
   "keywords": [
+    "evidyts",
     "typescript",
     "compiler",
     "testing",
     "llm"
   ],
-  "author": "",
-  "license": "LLL LICENSE",
   "dependencies": {
     "express": "^4.22.1",
     "playwright": "^1.52.0",
-    "ts-morph": "^21.0.1"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.25",
-    "@types/node": "^20.10.6",
-    "esbuild": "^0.25.12",
-    "ts-node": "^10.9.2",
-    "tsconfig-paths": "^4.2.0",
-    "typescript": "^5.3.3",
-    "lllts": "file:.lll/vendor/lllts"
+    "ts-morph": "^21.0.1",
+    "typescript": "^5.3.3"
   },
   "engines": {
     "node": ">=18.0.0"

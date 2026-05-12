@@ -99,8 +99,8 @@ export class App extends LitElement {
 	@Spec('Renders the app shell, the fixed LLL corner link, and the interactive image equalizer experience.')
 	render(): TemplateResult {
 		return html`
-			<a class="lll-corner-link" href="https://lllts.dev" target="_blank" rel="noreferrer" aria-label="Made with LLL">
-				<span class="lll-corner-link-text">made with LLL</span>
+			<a class="lll-corner-link" href="https://evidype.com" target="_blank" rel="noreferrer" aria-label="Made with Evidype">
+				<span class="lll-corner-link-text">Made with Evidype</span>
 			</a>
 			<main>
 				<header>
